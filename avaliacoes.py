@@ -1041,8 +1041,8 @@ with tabs[0]:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                
-                   with st.expander("Clique aqui para aceitar este atendimento!"):
+                    
+                    with st.expander("Clique aqui para aceitar este atendimento!"):
                         profissional = st.text_input(f"Nome da Profissional ", key=f"prof_nome_{os_id}")
                         telefone = st.text_input(f"Telefone para contato ", key=f"prof_tel_{os_id}")
                         resposta = st.empty()
@@ -1076,10 +1076,10 @@ with tabs[0]:
                         if st.button("Sim, tenho interesse neste atendimento!", key=f"btn_sim_{os_id}"):
                             salvar_aceite(os_id, profissional, telefone, True, origem="Portal")
                             resposta.success("✅ Obrigado! Seu interesse foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
-
+        
                        # if col2.button("Não posso aceitar", key=f"btn_nao_{os_id}"):
                         #    salvar_aceite(os_id, profissional, telefone, False, origem="Portal")
                          #   resposta.success("✅ Obrigado! Fique de olho em novas oportunidades.")
-
+        
         else:
             st.info("Nenhum atendimento disponível. Aguarde liberação do admin.")
