@@ -1042,46 +1042,28 @@ with tabs[0]:
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    with st.expander("Clique aqui para aceitar este atendimento!"):
-                        profissional = st.text_input(f"Nome da Profissional", key=f"prof_nome_{os_id}")
-                        telefone = st.text_input(f"Telefone para contato", key=f"prof_tel_{os_id}")
-                        resposta = st.empty()
-                    
-                        btn_id = f"btn_aceite_{os_id}"
-                        btn_style = f"""
+                    expander_style = """
                         <style>
-                        #{btn_id} {{
+                        /* Aplica fundo verde e texto branco ao expander do Streamlit */
+                        div[role="button"][aria-expanded] {
                             background: #25D366 !important;
                             color: #fff !important;
-                            border: none !important;
-                            border-radius: 8px !important;
-                            padding: 12px 0 !important;
-                            font-size: 1.08em !important;
-                            font-weight: 700 !important;
-                            width: 100% !important;
-                            margin-top: 12px !important;
-                            box-shadow: 0 1px 6px #c0c0c0;
-                            cursor: pointer;
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center;
-                            gap: 10px;
-                        }}
+                            border-radius: 10px !important;
+                            font-weight: bold;
+                            font-size: 1.08em;
+                        }
                         </style>
                         """
-                        st.markdown(btn_style, unsafe_allow_html=True)
-                        btn_html = f"""
-                        <button id="{btn_id}">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="height:22px;vertical-align:middle;margin-right:5px;">
-                            Sim, aceito este atendimento
-                        </button>
-                        """
-                        # Cria o botão visualmente, e depois faz o real com o Streamlit invisível:
-                        st.markdown(btn_html, unsafe_allow_html=True)
-                        # Streamlit 'button' real (mas invisível)
-                        if st.button("Sim, aceito este atendimento", key=f"btn_real_{os_id}", help="Registrar aceite", args=(), kwargs={}, use_container_width=True):
-                            salvar_aceite(os_id, profissional, telefone, True, origem="portal")
-                            resposta.success("✅ Obrigado! Seu aceite foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
+                        st.markdown(expander_style, unsafe_allow_html=True)
+                        
+                        with st.expander("Clique aqui para aceitar este atendimento!"):
+                            profissional = st.text_input(f"Nome da Profissional", key=f"prof_nome_{os_id}")
+                            telefone = st.text_input(f"Telefone para contato", key=f"prof_tel_{os_id}")
+                            resposta = st.empty()
+                            if st.button("Sim, aceito este atendimento", key=f"btn_real_{os_id}", use_container_width=True):
+                                salvar_aceite(os_id, profissional, telefone, True, origem="portal")
+                                resposta.success("✅ Obrigado! Seu aceite foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
+
 
         else:
             st.info("Nenhum atendimento disponível. Aguarde liberação do admin.")
