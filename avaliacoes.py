@@ -1042,15 +1042,41 @@ with tabs[0]:
                         </div>
                     """, unsafe_allow_html=True)
                 
-                    with st.expander("Clique aqui para aceitar este atendimento!"):
+                   with st.expander("Clique aqui para aceitar este atendimento!"):
                         profissional = st.text_input(f"Nome da Profissional ", key=f"prof_nome_{os_id}")
                         telefone = st.text_input(f"Telefone para contato ", key=f"prof_tel_{os_id}")
-                        col1, col2 = st.columns(2)
                         resposta = st.empty()
-                
-                        if col1.button("Sim, tenho interesse neste atendimento!", key=f"btn_sim_{os_id}"):
+                        
+                        # Usando o botão verde estilo WhatsApp
+                        whatsapp_button = st.markdown(
+                            f"""
+                            <button style="
+                                background:#25D366;
+                                color:#fff;
+                                border:none;
+                                border-radius:8px;
+                                font-size:1.1em;
+                                font-weight:700;
+                                cursor:pointer;
+                                width:100%;
+                                padding:12px 0;
+                                margin-top:8px;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                gap:12px;">
+                                <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" height="22" style="margin-bottom:-4px;">
+                                Sim, aceito este atendimento
+                            </button>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                        
+                        # Para o botão funcionar de verdade (submeter dados), precisa de um st.button também:
+                        if st.button("Sim, tenho interesse neste atendimento!", key=f"btn_sim_{os_id}"):
                             salvar_aceite(os_id, profissional, telefone, True, origem="Portal")
-                            resposta.success("✅ Obrigado! Seu aceite foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
+                            resposta.success("✅ Obrigado! Seu interesse foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
+
                        # if col2.button("Não posso aceitar", key=f"btn_nao_{os_id}"):
                         #    salvar_aceite(os_id, profissional, telefone, False, origem="Portal")
                          #   resposta.success("✅ Obrigado! Fique de olho em novas oportunidades.")
