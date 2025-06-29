@@ -1042,18 +1042,18 @@ with tabs[0]:
                         </div>
                     """, unsafe_allow_html=True)
                 
-                    with st.expander("Clique aqui para aceitar ou recusar este atendimento"):
+                    with st.expander("Clique aqui para aceitar este atendimento!"):
                         profissional = st.text_input(f"Nome da Profissional (OS {os_id})", key=f"prof_nome_{os_id}")
                         telefone = st.text_input(f"Telefone para contato (OS {os_id})", key=f"prof_tel_{os_id}")
                         col1, col2 = st.columns(2)
                         resposta = st.empty()
                 
-                        if col1.button("Sim, aceito este atendimento", key=f"btn_sim_{os_id}"):
+                        if col1.button("Sim, tenho interesse neste atendimento!", key=f"btn_sim_{os_id}"):
                             salvar_aceite(os_id, profissional, telefone, True, origem="Portal")
                             resposta.success("✅ Obrigado! Seu aceite foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
-                        if col2.button("Não posso aceitar", key=f"btn_nao_{os_id}"):
-                            salvar_aceite(os_id, profissional, telefone, False, origem="Portal")
-                            resposta.success("✅ Obrigado! Fique de olho em novas oportunidades.")
+                       # if col2.button("Não posso aceitar", key=f"btn_nao_{os_id}"):
+                        #    salvar_aceite(os_id, profissional, telefone, False, origem="Portal")
+                         #   resposta.success("✅ Obrigado! Fique de olho em novas oportunidades.")
 
         else:
             st.info("Nenhum atendimento disponível. Aguarde liberação do admin.")
