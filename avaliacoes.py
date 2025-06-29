@@ -12,7 +12,7 @@ PORTAL_EXCEL = "portal_atendimentos_clientes.xlsx"  # ou o nome correto do seu a
 PORTAL_OS_LIST = "portal_atendimentos_os_list.json" # ou o nome correto da lista de OS (caso use JSON, por exemplo)
 
 
-st.set_page_config(page_title="BELO HORIZONTE || Otimização Rotas Vavivê", layout="wide")
+st.set_page_config(page_title="TESTE TESTE || Otimização Rotas Vavivê", layout="wide")
 
 ACEITES_FILE = "aceites.xlsx"
 ROTAS_FILE = "rotas_bh_dados_tratados_completos.xlsx"
