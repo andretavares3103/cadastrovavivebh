@@ -1043,8 +1043,8 @@ with tabs[0]:
                     """, unsafe_allow_html=True)
                 
                     with st.expander("Clique aqui para aceitar este atendimento!"):
-                        profissional = st.text_input(f"Nome da Profissional (OS {os_id})", key=f"prof_nome_{os_id}")
-                        telefone = st.text_input(f"Telefone para contato (OS {os_id})", key=f"prof_tel_{os_id}")
+                        profissional = st.text_input(f"Nome da Profissional ", key=f"prof_nome_{os_id}")
+                        telefone = st.text_input(f"Telefone para contato ", key=f"prof_tel_{os_id}")
                         col1, col2 = st.columns(2)
                         resposta = st.empty()
                 
