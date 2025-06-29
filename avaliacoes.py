@@ -47,7 +47,7 @@ def exibe_formulario_aceite(os_id):
 
 
 
-def salvar_aceite(os_id, profissional, telefone, aceitou):
+def salvar_aceite(os_id, profissional, telefone, aceitou, origem=None):
     agora = pd.Timestamp.now()
     data = agora.strftime("%d/%m/%Y")
     dia_semana = agora.strftime("%A")
@@ -66,8 +66,10 @@ def salvar_aceite(os_id, profissional, telefone, aceitou):
         "Aceitou": "Sim" if aceitou else "Não",
         "Data do Aceite": data,
         "Dia da Semana": dia_semana,
-        "Horário do Aceite": horario
+        "Horário do Aceite": horario,
+        "Origem": origem if origem else ""
     }
+
     df = pd.concat([df, pd.DataFrame([nova_linha])], ignore_index=True)
     df.to_excel(ACEITES_FILE, index=False)
 
