@@ -702,7 +702,7 @@ def pipeline(file_path, output_dir):
                 col += 1
         matriz_resultado_corrigida.append(linha)
     df_matriz_rotas = pd.DataFrame(matriz_resultado_corrigida)
-    app_url = "https://rotasvavive.streamlit.app/"
+    app_url = "https://appatendimentos.streamlit.app/"
     df_matriz_rotas["Mensagem Padrão"] = df_matriz_rotas.apply(
         lambda row: f"{row['Mensagem Padrão']}\n👉 [Clique aqui para validar seu aceite]({app_url}?aceite={row['OS']})\n",
         axis=1
