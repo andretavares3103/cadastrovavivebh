@@ -1056,13 +1056,13 @@ with tabs[0]:
                     """
                     st.markdown(expander_style, unsafe_allow_html=True)
                     
-                    with st.expander("Clique aqui para aceitar este atendimento!"):
+                    with st.expander("Tem disponibilidade? Clique aqui para aceitar este atendimento!"):
                         profissional = st.text_input(f"Nome da Profissional", key=f"prof_nome_{os_id}")
                         telefone = st.text_input(f"Telefone para contato", key=f"prof_tel_{os_id}")
                         resposta = st.empty()
-                        if st.button("Sim, aceito este atendimento", key=f"btn_real_{os_id}", use_container_width=True):
+                        if st.button("Sim, tenho interesse neste atendimento.", key=f"btn_real_{os_id}", use_container_width=True):
                             salvar_aceite(os_id, profissional, telefone, True, origem="portal")
-                            resposta.success("✅ Obrigado! Seu aceite foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
+                            resposta.success("✅ Obrigado! Seu interesse foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
 
 
         else:
