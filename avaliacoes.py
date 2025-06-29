@@ -1042,7 +1042,7 @@ with tabs[0]:
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    expander_style = """
+                        expander_style = """
                         <style>
                         /* Aplica fundo verde e texto branco ao expander do Streamlit */
                         div[role="button"][aria-expanded] {
