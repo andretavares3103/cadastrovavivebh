@@ -1006,50 +1006,54 @@ with tabs[0]:
             else:
                 st.write(f"Exibindo {len(df)} atendimentos selecionados pelo administrador:")
                 for _, row in df.iterrows():
-                    servico = row.get("Serviço", "")
-                    nome_cliente = row.get("Cliente", "")
-                    bairro = row.get("Bairro", "")
-                    data = row.get("Data 1", "")
-                    hora_entrada = row.get("Hora de entrada", "")
-                    hora_servico = row.get("Horas de serviço", "")
-                    referencia = row.get("Ponto de Referencia", "")
-                    mensagem = (
-                        f"Aceito o atendimento de {servico} para o cliente {nome_cliente}, no bairro {bairro}, "
-                        f"para o dia {data}. Horário de entrada: {hora_entrada}"
-                    )
-                    mensagem_url = urllib.parse.quote(mensagem)
-                    celular = "31995265364"
-                    whatsapp_url = f"https://wa.me/55{celular}?text={mensagem_url}"
-                    st.markdown(f"""
-                        <div style="
-                            background: #fff;
-                            border: 1.5px solid #eee;
-                            border-radius: 18px;
-                            padding: 18px 18px 12px 18px;
-                            margin-bottom: 14px;
-                            min-width: 260px;
-                            max-width: 440px;
-                            color: #00008B;
-                            font-family: Arial, sans-serif;
-                        ">
-                            <div style="font-size:1.2em; font-weight:bold; color:#00008B; margin-bottom:2px;">
-                                {servico}
-                            </div>
-                            <div style="font-size:1em; color:#00008B; margin-bottom:7px;">
-                                <b style="color:#00008B;margin-left:24px">Bairro:</b> <span>{bairro}</span>
-                            </div>
-                            <div style="font-size:0.95em; color:#00008B;">
-                                <b>Data:</b> <span>{data}</span><br>
-                                <b>Hora de entrada:</b> <span>{hora_entrada}</span><br>
-                                <b>Horas de serviço:</b> <span>{hora_servico}</span><br>
-                                <b>Ponto de Referência:</b> <span>{referencia if referencia and referencia != 'nan' else '-'}</span>
-                            </div>
-                            <a href="{whatsapp_url}" target="_blank">
-                                <button style="margin-top:12px;padding:10px 24px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:1.02em; font-weight:700;cursor:pointer; width:100%;">
-                                    Aceitar Atendimento no WhatsApp
-                                </button>
-                            </a>
-                        </div>
-                    """, unsafe_allow_html=True)
+    servico = row.get("Serviço", "")
+    nome_cliente = row.get("Cliente", "")
+    bairro = row.get("Bairro", "")
+    data = row.get("Data 1", "")
+    hora_entrada = row.get("Hora de entrada", "")
+    hora_servico = row.get("Horas de serviço", "")
+    referencia = row.get("Ponto de Referencia", "")
+    os_id = int(row["OS"])
+    
+    st.markdown(f"""
+        <div style="
+            background: #fff;
+            border: 1.5px solid #eee;
+            border-radius: 18px;
+            padding: 18px 18px 12px 18px;
+            margin-bottom: 14px;
+            min-width: 260px;
+            max-width: 440px;
+            color: #00008B;
+            font-family: Arial, sans-serif;
+        ">
+            <div style="font-size:1.2em; font-weight:bold; color:#00008B; margin-bottom:2px;">
+                {servico}
+            </div>
+            <div style="font-size:1em; color:#00008B; margin-bottom:7px;">
+                <b style="color:#00008B;margin-left:24px">Bairro:</b> <span>{bairro}</span>
+            </div>
+            <div style="font-size:0.95em; color:#00008B;">
+                <b>Data:</b> <span>{data}</span><br>
+                <b>Hora de entrada:</b> <span>{hora_entrada}</span><br>
+                <b>Horas de serviço:</b> <span>{hora_servico}</span><br>
+                <b>Ponto de Referência:</b> <span>{referencia if referencia and referencia != 'nan' else '-'}</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    with st.expander("Clique aqui para aceitar ou recusar este atendimento"):
+        profissional = st.text_input(f"Nome da Profissional (OS {os_id})", key=f"prof_nome_{os_id}")
+        telefone = st.text_input(f"Telefone para contato (OS {os_id})", key=f"prof_tel_{os_id}")
+        col1, col2 = st.columns(2)
+        resposta = st.empty()
+
+        if col1.button("Sim, aceito este atendimento", key=f"btn_sim_{os_id}"):
+            salvar_aceite(os_id, profissional, telefone, True, origem="Portal")
+            resposta.success("✅ Obrigado! Seu aceite foi registrado com sucesso. Em breve daremos retorno sobre o atendimento!")
+        if col2.button("Não posso aceitar", key=f"btn_nao_{os_id}"):
+            salvar_aceite(os_id, profissional, telefone, False, origem="Portal")
+            resposta.success("✅ Obrigado! Fique de olho em novas oportunidades.")
+
         else:
             st.info("Nenhum atendimento disponível. Aguarde liberação do admin.")
