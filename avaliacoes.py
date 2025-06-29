@@ -60,7 +60,7 @@ def salvar_aceite(os_id, profissional, telefone, aceitou, origem=None):
             "Data do Aceite", "Dia da Semana", "Horário do Aceite"
         ])
     nova_linha = {
-        "OS": os_id,
+        "OS": int(os_id),
         "Profissional": profissional,
         "Telefone": telefone,
         "Aceitou": "Sim" if aceitou else "Não",
@@ -829,6 +829,10 @@ with tabs[3]:
 
         df_aceites = pd.read_excel(ACEITES_FILE)
         df_rotas = pd.read_excel(ROTAS_FILE, sheet_name="Rotas")
+
+        df_aceites["OS"] = df_aceites["OS"].astype(str).str.strip()
+        df_rotas["OS"] = df_rotas["OS"].astype(str).str.strip()
+        
         df_aceites_completo = pd.merge(
             df_aceites, df_rotas[
                 ["OS", "CPF_CNPJ", "Nome Cliente", "Data 1", "Serviço", "Plano",
