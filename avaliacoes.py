@@ -12,7 +12,7 @@ PORTAL_EXCEL = "portal_atendimentos_clientes.xlsx"  # ou o nome correto do seu a
 PORTAL_OS_LIST = "portal_atendimentos_os_list.json" # ou o nome correto da lista de OS (caso use JSON, por exemplo)
 
 
-st.set_page_config(page_title="TESTE TESTE || Otimização Rotas Vavivê", layout="wide")
+st.set_page_config(page_title="BELO HORIZONTE || Otimização Rotas Vavivê", layout="wide")
 
 ACEITES_FILE = "aceites.xlsx"
 ROTAS_FILE = "rotas_bh_dados_tratados_completos.xlsx"
@@ -60,7 +60,7 @@ def salvar_aceite(os_id, profissional, telefone, aceitou, origem=None):
             "Data do Aceite", "Dia da Semana", "Horário do Aceite"
         ])
     nova_linha = {
-        "OS": int(os_id),
+        "OS": os_id,
         "Profissional": profissional,
         "Telefone": telefone,
         "Aceitou": "Sim" if aceitou else "Não",
@@ -69,7 +69,6 @@ def salvar_aceite(os_id, profissional, telefone, aceitou, origem=None):
         "Horário do Aceite": horario,
         "Origem": origem if origem else ""
     }
-
     df = pd.concat([df, pd.DataFrame([nova_linha])], ignore_index=True)
     df.to_excel(ACEITES_FILE, index=False)
 
@@ -702,7 +701,7 @@ def pipeline(file_path, output_dir):
                 col += 1
         matriz_resultado_corrigida.append(linha)
     df_matriz_rotas = pd.DataFrame(matriz_resultado_corrigida)
-    app_url = "https://appatendimentos.streamlit.app/"
+    app_url = "https://rotasvavive.streamlit.app/"
     df_matriz_rotas["Mensagem Padrão"] = df_matriz_rotas.apply(
         lambda row: f"{row['Mensagem Padrão']}\n👉 [Clique aqui para validar seu aceite]({app_url}?aceite={row['OS']})\n",
         axis=1
@@ -754,7 +753,7 @@ def pipeline(file_path, output_dir):
     return final_path
 
 tabs = st.tabs([ "Portal Atendimentos", "Upload de Arquivo", "Matriz de Rotas", "Aceites"])
-
+active_tab = st.session_state.get("tabs", 0)
 
 with tabs[1]:
 
@@ -821,6 +820,30 @@ with tabs[2]:
 
 
 with tabs[3]:
+    if "senha_aceites_autenticada" not in st.session_state:
+        st.session_state.senha_aceites_autenticada = False
+
+    if not st.session_state.senha_aceites_autenticada:
+        senha = st.text_input("Acesso restrito: digite a senha para visualizar os aceites", type="password", key="senha_tab3")
+        if st.button("Entrar", key="btn_entrar_tab3"):
+            if senha == "vvv":
+                st.session_state.senha_aceites_autenticada = True
+                st.success("Acesso liberado!")
+                st.experimental_rerun()
+            else:
+                st.error("Senha incorreta")
+    else:
+        # Coloque aqui todo o conteúdo protegido da aba dos aceites
+        if os.path.exists(ACEITES_FILE) and os.path.exists(ROTAS_FILE):
+            # ... resto do seu código da aba ...
+            pass
+        elif os.path.exists(ACEITES_FILE):
+            # ... etc ...
+            pass
+        else:
+            st.info("Nenhum aceite registrado ainda.")
+
+
 
 
     if os.path.exists(ACEITES_FILE) and os.path.exists(ROTAS_FILE):
@@ -829,10 +852,6 @@ with tabs[3]:
 
         df_aceites = pd.read_excel(ACEITES_FILE)
         df_rotas = pd.read_excel(ROTAS_FILE, sheet_name="Rotas")
-
-        df_aceites["OS"] = df_aceites["OS"].astype(str).str.strip()
-        df_rotas["OS"] = df_rotas["OS"].astype(str).str.strip()
-        
         df_aceites_completo = pd.merge(
             df_aceites, df_rotas[
                 ["OS", "CPF_CNPJ", "Nome Cliente", "Data 1", "Serviço", "Plano",
@@ -928,7 +947,7 @@ with tabs[0]:
     st.markdown("""
         <div style='display:flex;align-items:center;gap:16px'>
             <img src='https://i.imgur.com/gIhC0fC.png' height='48'>
-            <span style='font-size:1.7em;font-weight:700;color:#18d96b;letter-spacing:1px;'>PORTAL DE ATENDIMENTOS</span>
+            <span style='font-size:1.7em;font-weight:700;color:#18d96b;letter-spacing:1px;'>BELO HORIZONTE || PORTAL DE ATENDIMENTOS</span>
         </div>
         <p style='color:#666;font-size:1.08em;margin:8px 0 18px 0'>
             Consulte abaixo os atendimentos disponíveis!
