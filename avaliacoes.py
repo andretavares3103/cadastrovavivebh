@@ -1,186 +1,168 @@
 import streamlit as st
 import pandas as pd
-import re
+import sqlite3
 import os
 import uuid
+import hashlib
 from datetime import datetime
-from io import BytesIO
 
-# --- Google Sheets/Drive ---
-import gspread
-from google.oauth2.service_account import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload
+UPLOADS_DIR = "uploads"
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+DB_PATH = "cadastros.db"
 
-# =============== CONFIGURAR GOOGLE API ===============
-st.sidebar.header("🔒 Configuração Google API")
-st.sidebar.write("Suba o arquivo de credenciais (JSON) do Google Service Account.")
+# ----------- AUTENTICAÇÃO SEGURA -----------
+def hash_senha(senha):
+    return hashlib.sha256(senha.encode()).hexdigest()
 
-google_creds_file = st.sidebar.file_uploader("Upload credenciais Google", type="json")
-sheet_url = st.sidebar.text_input("URL da Google Sheet (com permissão de edição)", value="https://docs.google.com/spreadsheets/d/...")
-folder_id = st.sidebar.text_input("ID da pasta Google Drive para arquivos", value="SUA_FOLDER_ID_AQUI")
+ADMIN_USER = "admin"
+ADMIN_HASH = hash_senha("vvv")  # Troque pela sua senha forte!
 
-if google_creds_file:
-    creds = Credentials.from_service_account_info(
-        pd.read_json(google_creds_file).to_dict(),
-        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    )
-    gc = gspread.authorize(creds)
-    service_drive = build('drive', 'v3', credentials=creds)
-    SHEET_OK = True
-else:
-    creds = gc = service_drive = None
-    SHEET_OK = False
+def autenticar(usuario, senha):
+    return usuario == ADMIN_USER and hash_senha(senha) == ADMIN_HASH
 
-# =============== MÁSCARA E VALIDAÇÃO CPF/CELULAR ===============
-def formatar_cpf(valor):
-    valor = re.sub(r'\D', '', valor)
-    if len(valor) == 11:
-        return "%s.%s.%s-%s" % (valor[:3], valor[3:6], valor[6:9], valor[9:])
-    return valor
+# ----------- BANCO DE DADOS -----------
+def conectar():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
 
-def formatar_celular(valor):
-    valor = re.sub(r'\D', '', valor)
-    if len(valor) == 11:
-        return "(%s) %s-%s" % (valor[:2], valor[2:7], valor[7:])
-    elif len(valor) == 10:
-        return "(%s) %s-%s" % (valor[:2], valor[2:6], valor[6:])
-    return valor
+def criar_tabela():
+    with conectar() as conn:
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS profissionais (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT, cpf TEXT, rg TEXT, celular TEXT, email TEXT, data_nascimento TEXT,
+            cep TEXT, rua TEXT, numero TEXT, bairro TEXT, cidade TEXT, estado TEXT,
+            arquivos TEXT, data_cadastro TEXT
+        )""")
 
-def validar_cpf(cpf):
-    cpf = re.sub(r'\D', '', cpf)
-    return len(cpf) == 11
+def inserir_profissional(dados, links_arquivos):
+    with conectar() as conn:
+        conn.execute("""
+        INSERT INTO profissionais
+        (nome, cpf, rg, celular, email, data_nascimento, cep, rua, numero, bairro, cidade, estado, arquivos, data_cadastro)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (*dados, ";".join(links_arquivos), datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
-def validar_celular(cel):
-    cel = re.sub(r'\D', '', cel)
-    return len(cel) in [10, 11]
+def listar_profissionais():
+    with conectar() as conn:
+        return pd.read_sql("SELECT * FROM profissionais", conn)
 
-# =============== CARREGAR DADOS EXISTENTES ===============
-def carregar_registros(sheet_url, local_file="cadastros.csv"):
-    if SHEET_OK and sheet_url.startswith("https://docs.google.com/spreadsheets"):
-        sh = gc.open_by_url(sheet_url)
-        worksheet = sh.sheet1
-        df = pd.DataFrame(worksheet.get_all_records())
-    elif os.path.exists(local_file):
-        df = pd.read_csv(local_file)
-    else:
-        df = pd.DataFrame()
-    return df
+criar_tabela()
 
-# =============== SALVAR DADOS ===============
-def salvar_dados(dados, sheet_url, local_file="cadastros.csv"):
-    # Google Sheets
-    if SHEET_OK and sheet_url.startswith("https://docs.google.com/spreadsheets"):
-        sh = gc.open_by_url(sheet_url)
-        worksheet = sh.sheet1
-        worksheet.append_row(dados)
-    # Local CSV (fallback ou alternativa)
-    if os.path.exists(local_file):
-        df = pd.read_csv(local_file)
-        df.loc[len(df)] = dados
-    else:
-        df = pd.DataFrame([dados])
-    df.to_csv(local_file, index=False)
+# ----------- LAYOUT -----------
+st.set_page_config("Cadastro de Profissional", layout="wide")
+tabs = st.tabs(["📋 Cadastro de Profissional", "🔑 Admin (Visualizar Cadastros)"])
 
-# =============== SALVAR ARQUIVO GOOGLE DRIVE ===============
-def salvar_arquivo_drive(file, folder_id):
-    if SHEET_OK and folder_id and file is not None:
-        file_metadata = {
-            'name': f"{uuid.uuid4()}_{file.name}",
-            'parents': [folder_id]
-        }
-        media = MediaIoBaseUpload(BytesIO(file.read()), mimetype=file.type)
-        uploaded_file = service_drive.files().create(body=file_metadata, media_body=media, fields='id,webViewLink').execute()
-        return uploaded_file.get('webViewLink')
-    return None
-
-# =============== LAYOUT FORMULÁRIO ===============
-st.title("Cadastro de Profissional (Simulação Completa)")
-
-with st.form("cadastro_prof"):
-    st.markdown("#### **Informações Pessoais**")
-    nome = st.text_input("Nome *")
-    cpf = st.text_input("CPF *", max_chars=14, help="Apenas números")
-    rg = st.text_input("RG")
-    celular = st.text_input("Celular *", max_chars=15)
-    email = st.text_input("E-mail *")
-    data_nascimento = st.date_input("Data de nascimento *")
-
-    st.markdown("#### **Endereço**")
-    cep = st.text_input("CEP")
-    rua = st.text_input("Rua")
-    numero = st.text_input("Número")
-    bairro = st.text_input("Bairro")
-    cidade = st.text_input("Cidade")
-    estado = st.text_input("Estado")
-
-    st.markdown("#### **Arquivos do profissional**")
-    arquivos = st.file_uploader("Upload de documentos (PDF/JPG)", accept_multiple_files=True)
-
-    st.markdown("#### **Opções de salvamento**")
-    salvar_local = st.checkbox("Salvar localmente (CSV)", value=True)
-    salvar_nuvem = st.checkbox("Salvar no Google Sheets/Drive", value=True)
-
-    submitted = st.form_submit_button("Finalizar Cadastro")
-
-if submitted:
-    # Máscara e validação
-    cpf_format = formatar_cpf(cpf)
-    cel_format = formatar_celular(celular)
-
-    # Carregar cadastros já existentes para evitar duplicidade
-    df_existente = carregar_registros(sheet_url)
-    duplicado = False
-    if not df_existente.empty and cpf in df_existente.get("CPF", []):
-        duplicado = True
-        st.warning("CPF já cadastrado!")
-
-    # Checagem de campos obrigatórios
-    obrigatorios = [nome, cpf, celular, email, data_nascimento]
-    if any([not campo for campo in obrigatorios]):
-        st.error("Preencha todos os campos obrigatórios (*).")
-    elif not validar_cpf(cpf):
-        st.error("CPF inválido! Deve conter 11 dígitos.")
-    elif not validar_celular(celular):
-        st.error("Celular inválido! Deve conter DDD e número.")
-    elif duplicado:
-        st.error("Não é possível cadastrar duplicado.")
-    else:
-        # Salvar arquivos em nuvem/local
-        links_arquivos = []
-        if arquivos:
-            for arquivo in arquivos:
-                url = None
-                if salvar_nuvem:
-                    url = salvar_arquivo_drive(arquivo, folder_id)
-                # No modo local, salvar em 'uploads/'
-                if salvar_local:
-                    os.makedirs("uploads", exist_ok=True)
-                    with open(os.path.join("uploads", arquivo.name), "wb") as f:
-                        f.write(arquivo.read())
-                links_arquivos.append(url if url else f"uploads/{arquivo.name}")
-        
-        # Dados para salvar
-        dados = [
-            nome, cpf_format, rg, cel_format, email, str(data_nascimento),
-            cep, rua, numero, bairro, cidade, estado,
-            "; ".join(links_arquivos)
-        ]
-        salvar_ok = False
-        if salvar_nuvem or salvar_local:
-            salvar_dados(dados, sheet_url)
-            salvar_ok = True
-        if salvar_ok:
-            st.success("Cadastro realizado com sucesso!")
-            st.write("Visualizar cadastros:", df_existente.append(pd.Series(dados, index=df_existente.columns), ignore_index=True))
+# ========== TELA 1: Cadastro ==========
+with tabs[0]:
+    st.header("Cadastro de Profissional")
+    with st.form("form_cadastro"):
+        col1, col2 = st.columns(2)
+        with col1:
+            nome = st.text_input("Nome *")
+            cpf = st.text_input("CPF *", max_chars=14)
+            rg = st.text_input("RG")
+            celular = st.text_input("Celular *", max_chars=15)
+            email = st.text_input("E-mail *")
+            data_nascimento = st.date_input("Data de nascimento *")
+        with col2:
+            cep = st.text_input("CEP")
+            rua = st.text_input("Rua")
+            numero = st.text_input("Número")
+            bairro = st.text_input("Bairro")
+            cidade = st.text_input("Cidade")
+            estado = st.text_input("Estado")
+        arquivos = st.file_uploader("Upload de documentos (PDF/JPG)", accept_multiple_files=True)
+        enviado = st.form_submit_button("Finalizar Cadastro")
+    if enviado:
+        obrigatorios = [nome, cpf, celular, email, data_nascimento]
+        if any([not campo for campo in obrigatorios]):
+            st.error("Preencha todos os campos obrigatórios.")
         else:
-            st.warning("Nenhuma opção de salvamento selecionada.")
+            links_arquivos = []
+            if arquivos:
+                for arq in arquivos:
+                    arq_name = f"{uuid.uuid4()}_{arq.name}"
+                    arq_path = os.path.join(UPLOADS_DIR, arq_name)
+                    with open(arq_path, "wb") as f:
+                        f.write(arq.read())
+                    links_arquivos.append(arq_path)
+            dados = [nome, cpf, rg, celular, email, str(data_nascimento), cep, rua, numero, bairro, cidade, estado]
+            inserir_profissional(dados, links_arquivos)
+            st.success("Cadastro realizado com sucesso!")
 
-# =============== ESTILO (CSS STREAMLIT BÁSICO) ===============
-st.markdown("""
-<style>
-    .css-1cpxqw2 {background-color: #f5f7ff;}
-    .stButton>button {background-color: #1936b0; color: white;}
-    .stForm {border-radius: 10px; border: 2px solid #f09595;}
-</style>
-""", unsafe_allow_html=True)
+# ========== TELA 2: Admin (com autenticação segura, busca e filtro) ==========
+with tabs[1]:
+    st.header("Administração de Cadastros")
+    if "admin_autenticado" not in st.session_state:
+        st.session_state.admin_autenticado = False
+
+    if not st.session_state.admin_autenticado:
+        with st.form("form_login"):
+            usuario = st.text_input("Usuário")
+            senha = st.text_input("Senha", type="password")
+            login = st.form_submit_button("Entrar")
+        if login:
+            if autenticar(usuario, senha):
+                st.session_state.admin_autenticado = True
+                st.success("Login realizado com sucesso!")
+            else:
+                st.error("Usuário ou senha incorretos.")
+        st.stop()
+
+    # Se chegou aqui, está autenticado
+    st.success(f"Bem-vindo, {ADMIN_USER}!")
+
+    df = listar_profissionais()
+    if df.empty:
+        st.info("Nenhum cadastro realizado ainda.")
+        st.stop()
+
+    # --------- FILTROS (por nome, período) ----------
+    colf1, colf2 = st.columns([2, 3])
+
+    with colf1:
+        busca_nome = st.text_input("Buscar por nome").strip().lower()
+    with colf2:
+        st.write("Filtrar por data de cadastro:")
+        min_date = df["data_cadastro"].min()
+        max_date = df["data_cadastro"].max()
+        if pd.isnull(min_date): min_date = datetime.today().strftime("%Y-%m-%d")
+        if pd.isnull(max_date): max_date = datetime.today().strftime("%Y-%m-%d")
+        data_inicio, data_fim = st.date_input(
+            "Período:",
+            [pd.to_datetime(min_date).date(), pd.to_datetime(max_date).date()]
+        )
+
+    df_filtro = df.copy()
+    if busca_nome:
+        df_filtro = df_filtro[df_filtro["nome"].str.lower().str.contains(busca_nome)]
+    # Filtra pelo período
+    df_filtro = df_filtro[
+        (pd.to_datetime(df_filtro["data_cadastro"]) >= pd.to_datetime(data_inicio)) &
+        (pd.to_datetime(df_filtro["data_cadastro"]) <= pd.to_datetime(data_fim))
+    ]
+    st.markdown(f"**Total encontrado:** {len(df_filtro)} cadastro(s)")
+
+    # -------- TABELA E DOWNLOADS -----------
+    st.dataframe(df_filtro.drop(columns=["id"]), hide_index=True, use_container_width=True)
+
+    st.subheader("Download de Documentos (anexos)")
+    for idx, row in df_filtro.iterrows():
+        if row["arquivos"]:
+            for arq_path in row["arquivos"].split(";"):
+                arq_path = arq_path.strip()
+                if arq_path and os.path.exists(arq_path):
+                    with open(arq_path, "rb") as f:
+                        st.download_button(
+                            f"Baixar: {os.path.basename(arq_path)} (Profissional: {row['nome']})",
+                            data=f.read(),
+                            file_name=os.path.basename(arq_path),
+                            key=f"{arq_path}_{idx}"
+                        )
+    # -------- EXPORTAR FILTRO ----------
+    st.subheader("Exportar Cadastros Filtrados")
+    csv = df_filtro.to_csv(index=False).encode("utf-8")
+    st.download_button("Exportar para CSV", data=csv, file_name="cadastros_filtrados.csv")
+    excel = df_filtro.to_excel(index=False, engine='openpyxl')
+    st.download_button("Exportar para Excel", data=excel, file_name="cadastros_filtrados.xlsx")
+
