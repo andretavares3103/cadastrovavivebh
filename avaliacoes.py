@@ -78,7 +78,7 @@ with st.form("cadastro_prof"):
     st.markdown("#### **Informações Pessoais**")
     nome = st.text_input("Nome *")
     cpf = st.text_input("CPF *", max_chars=14, help="Apenas números")
-    rg = st.text_input("RG")
+    rg = st.text_input("RG *")
     celular = st.text_input("Celular *", max_chars=15, help="Apenas números")
     email = st.text_input("E-mail *")
     data_nascimento = st.date_input("Data de nascimento *", format="DD/MM/YYYY")
@@ -106,6 +106,7 @@ if submitted:
     obrigatorios = {
         "Nome": nome,
         "CPF": cpf,
+        "RG": rg,  # Agora RG é obrigatório!
         "Celular": celular,
         "E-mail": email,
         "Data de nascimento": data_nascimento
@@ -126,45 +127,4 @@ if submitted:
         links_rg_cpf = []
         if arquivos_rg_cpf:
             for arquivo in arquivos_rg_cpf:
-                url = salvar_arquivo_drive(arquivo, folder_id, cpf, nome, "RG_CPF")
-                links_rg_cpf.append(url if url else "Falha no upload")
-
-        # Salvar Comprovante de Residência
-        links_comprovante = []
-        if comprovante_residencia:
-            for arquivo in comprovante_residencia:
-                url = salvar_arquivo_drive(arquivo, folder_id, cpf, nome, "Comprovante")
-                links_comprovante.append(url if url else "Falha no upload")
-
-        # Salvar dados na Google Sheets
-        sh = gc.open_by_url(sheet_url)
-        worksheet = sh.sheet1
-        dados = [
-            nome,
-            cpf_format,
-            rg,
-            celular_format,
-            email,
-            data_nascimento_br,
-            cep_format,
-            rua,
-            numero,
-            bairro,
-            cidade,
-            estado,
-            "; ".join(links_rg_cpf),
-            "; ".join(links_comprovante),
-            datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-        ]
-        worksheet.append_row(dados)
-        st.success("Cadastro realizado com sucesso!")
-        st.write("RG/CPF enviados:", links_rg_cpf)
-        st.write("Comprovante de residência enviado:", links_comprovante)
-
-# =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
-st.markdown("---")
-if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
-    sh = gc.open_by_url(sheet_url)
-    worksheet = sh.sheet1
-    df = pd.DataFrame(worksheet.get_all_records())
-    st.dataframe(df, use_container_width=True)
+                url = salvar_arquivo_drive(arquivo,
