@@ -175,4 +175,14 @@ if submitted:
                 datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             ]
             worksheet.append_row(dados)
-            st.success("Cadastro realizado com suce
+            st.success("Cadastro realizado com sucesso!")
+            st.write("RG/CPF enviados:", links_rg_cpf)
+            st.write("Comprovante de residência enviado:", links_comprovante)
+
+# =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
+st.markdown("---")
+if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
+    sh = gc.open_by_url(sheet_url)
+    worksheet = sh.sheet1
+    df = pd.DataFrame(worksheet.get_all_records())
+    st.dataframe(df, use_container_width=True)
