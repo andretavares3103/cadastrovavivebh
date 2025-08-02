@@ -4,7 +4,41 @@ import re
 from datetime import datetime
 from io import BytesIO
 
-# ... (Google API setup igual ao exemplo anterior) ...
+# Google Auth/Sheets/Drive
+import gspread
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
+
+# ======== CONFIGURAÇÃO GOOGLE ==========
+st.sidebar.header("Configuração Google API")
+google_creds_file = st.sidebar.file_uploader("Upload credenciais Google (JSON)", type="json")
+sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/SEU_ID_AQUI")
+folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="PASTA_ID_AQUI")
+
+if google_creds_file:
+    creds = Credentials.from_service_account_info(
+        pd.read_json(google_creds_file).to_dict(),
+        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    )
+    gc = gspread.authorize(creds)
+    service_drive = build('drive', 'v3', credentials=creds)
+    SHEET_OK = True
+else:
+    creds = gc = service_drive = None
+    SHEET_OK = False
+
+def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
+    if SHEET_OK and folder_id and file is not None:
+        arquivo_nomeado = f"{cpf}_{nome}_{doc_type}_{file.name}"
+        file_metadata = {
+            'name': arquivo_nomeado,
+            'parents': [folder_id]
+        }
+        media = MediaIoBaseUpload(BytesIO(file.read()), mimetype=file.type)
+        uploaded_file = service_drive.files().create(body=file_metadata, media_body=media, fields='id,webViewLink').execute()
+        return uploaded_file.get('webViewLink')
+    return None
 
 def formatar_cpf(valor):
     valor = re.sub(r'\D', '', valor)
@@ -57,8 +91,9 @@ with st.form("cadastro_prof"):
     cidade = st.text_input("Cidade")
     estado = st.text_input("Estado")
 
-    st.markdown("#### **Arquivos do profissional**")
-    arquivos = st.file_uploader("Upload de documentos (PDF/JPG)", accept_multiple_files=True)
+    st.markdown("#### **Documentos obrigatórios**")
+    arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG)", accept_multiple_files=True)
+    comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG)", accept_multiple_files=True)
 
     submitted = st.form_submit_button("Finalizar Cadastro")
 
@@ -87,12 +122,19 @@ if submitted:
     elif not SHEET_OK:
         st.error("Configure o acesso à Google API no menu lateral.")
     else:
-        # Salvar arquivos no Drive e pegar links
-        links_arquivos = []
-        if arquivos:
-            for arquivo in arquivos:
-                url = salvar_arquivo_drive(arquivo, folder_id, cpf, nome)
-                links_arquivos.append(url if url else "Falha no upload")
+        # Salvar RG/CPF
+        links_rg_cpf = []
+        if arquivos_rg_cpf:
+            for arquivo in arquivos_rg_cpf:
+                url = salvar_arquivo_drive(arquivo, folder_id, cpf, nome, "RG_CPF")
+                links_rg_cpf.append(url if url else "Falha no upload")
+
+        # Salvar Comprovante de Residência
+        links_comprovante = []
+        if comprovante_residencia:
+            for arquivo in comprovante_residencia:
+                url = salvar_arquivo_drive(arquivo, folder_id, cpf, nome, "Comprovante")
+                links_comprovante.append(url if url else "Falha no upload")
 
         # Salvar dados na Google Sheets
         sh = gc.open_by_url(sheet_url)
@@ -110,11 +152,19 @@ if submitted:
             bairro,
             cidade,
             estado,
-            "; ".join(links_arquivos),
+            "; ".join(links_rg_cpf),
+            "; ".join(links_comprovante),
             datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         ]
         worksheet.append_row(dados)
         st.success("Cadastro realizado com sucesso!")
-        st.write("Links dos anexos enviados:", links_arquivos)
+        st.write("RG/CPF enviados:", links_rg_cpf)
+        st.write("Comprovante de residência enviado:", links_comprovante)
 
-# ... painel admin opcional igual ao anterior ...
+# =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
+st.markdown("---")
+if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
+    sh = gc.open_by_url(sheet_url)
+    worksheet = sh.sheet1
+    df = pd.DataFrame(worksheet.get_all_records())
+    st.dataframe(df, use_container_width=True)
