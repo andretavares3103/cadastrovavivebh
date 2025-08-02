@@ -135,9 +135,7 @@ if submitted:
         # Validação de idade mínima
         hoje = date.today()
         idade = hoje.year - data_nascimento.year - ((hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
-        if data_nascimento > hoje:
-            st.error("A data de nascimento não pode ser no futuro.")
-        elif idade < 18:
+        if idade < 18:
             st.error("É necessário ter pelo menos 18 anos para se cadastrar.")
         else:
             # prossegue para salvar...
@@ -190,4 +188,5 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
