@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
-from datetime import datetime
+from datetime import datetime, date
 from io import BytesIO
 
 # Google Auth/Sheets/Drive
@@ -96,8 +96,8 @@ with st.form("cadastro_prof"):
     estado = st.text_input("Estado")
 
     st.markdown("#### **Documentos obrigatórios**")
-    arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG)", accept_multiple_files=True)
-    comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG)", accept_multiple_files=True)
+    arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
+    comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
 
     submitted = st.form_submit_button("Finalizar Cadastro")
 
@@ -110,7 +110,7 @@ if submitted:
     obrigatorios = {
         "Nome": nome,
         "CPF": cpf,
-        "RG": rg,  # RG obrigatório!
+        "RG": rg,
         "Celular": celular,
         "E-mail": email,
         "Data de nascimento": data_nascimento
@@ -118,6 +118,10 @@ if submitted:
     faltando = [campo for campo, valor in obrigatorios.items() if not valor]
     if faltando:
         st.error("Preencha todos os campos obrigatórios: " + ", ".join(faltando))
+    elif not arquivos_rg_cpf:
+        st.error("É obrigatório anexar pelo menos 1 arquivo de RG/CPF (frente e verso).")
+    elif not comprovante_residencia:
+        st.error("É obrigatório anexar pelo menos 1 arquivo de comprovante de residência.")
     elif not validar_cpf(cpf):
         st.error("CPF inválido! Deve conter 11 dígitos.")
     elif not validar_celular(celular):
@@ -127,47 +131,57 @@ if submitted:
     elif not SHEET_OK:
         st.error("Configure o acesso à Google API no menu lateral.")
     else:
-        # Salvar RG/CPF
-        links_rg_cpf = []
-        if arquivos_rg_cpf:
+        # Validação de idade mínima
+        hoje = date.today()
+        idade = hoje.year - data_nascimento.year - ((hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
+        if idade < 18:
+            st.error("É necessário ter pelo menos 18 anos para se cadastrar.")
+        else:
+            # Salvar RG/CPF
+            links_rg_cpf = []
             for arquivo in arquivos_rg_cpf:
                 url = salvar_arquivo_drive(
                     arquivo, folder_id, cpf, nome, "RG_CPF"
                 )
                 links_rg_cpf.append(url if url else "Falha no upload")
 
-        # Salvar Comprovante de Residência
-        links_comprovante = []
-        if comprovante_residencia:
+            # Salvar Comprovante de Residência
+            links_comprovante = []
             for arquivo in comprovante_residencia:
                 url = salvar_arquivo_drive(
                     arquivo, folder_id, cpf, nome, "Comprovante"
                 )
                 links_comprovante.append(url if url else "Falha no upload")
 
-        # Salvar dados na Google Sheets
-        sh = gc.open_by_url(sheet_url)
-        worksheet = sh.sheet1
-        dados = [
-            nome,
-            cpf_format,
-            rg,
-            celular_format,
-            email,
-            data_nascimento_br,
-            cep_format,
-            rua,
-            numero,
-            bairro,
-            cidade,
-            estado,
-            "; ".join(links_rg_cpf),
-            "; ".join(links_comprovante),
-            datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-        ]
-        worksheet.append_row(dados)
-        st.success("Cadastro realizado com sucesso!")
-        st.write("RG/CPF enviados:", links_rg_cpf)
-        st.write("Comprovante de residência enviado:", links_comprovante)
+            # Salvar dados na Google Sheets
+            sh = gc.open_by_url(sheet_url)
+            worksheet = sh.sheet1
+            dados = [
+                nome,
+                cpf_format,
+                rg,
+                celular_format,
+                email,
+                data_nascimento_br,
+                cep_format,
+                rua,
+                numero,
+                bairro,
+                cidade,
+                estado,
+                "; ".join(links_rg_cpf),
+                "; ".join(links_comprovante),
+                datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            ]
+            worksheet.append_row(dados)
+            st.success("Cadastro realizado com sucesso!")
+            st.write("RG/CPF enviados:", links_rg_cpf)
+            st.write("Comprovante de residência enviado:", links_comprovante)
 
-# =============== VISUALIZA
+# =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
+st.markdown("---")
+if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
+    sh = gc.open_by_url(sheet_url)
+    worksheet = sh.sheet1
+    df = pd.DataFrame(worksheet.get_all_records())
+    st.dataframe(df, use_container_width=True)
