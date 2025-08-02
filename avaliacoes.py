@@ -36,7 +36,11 @@ def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
             'parents': [folder_id]
         }
         media = MediaIoBaseUpload(BytesIO(file.read()), mimetype=file.type)
-        uploaded_file = service_drive.files().create(body=file_metadata, media_body=media, fields='id,webViewLink').execute()
+        uploaded_file = service_drive.files().create(
+            body=file_metadata, 
+            media_body=media, 
+            fields='id,webViewLink'
+        ).execute()
         return uploaded_file.get('webViewLink')
     return None
 
@@ -106,7 +110,7 @@ if submitted:
     obrigatorios = {
         "Nome": nome,
         "CPF": cpf,
-        "RG": rg,  # Agora RG é obrigatório!
+        "RG": rg,  # RG obrigatório!
         "Celular": celular,
         "E-mail": email,
         "Data de nascimento": data_nascimento
@@ -127,4 +131,43 @@ if submitted:
         links_rg_cpf = []
         if arquivos_rg_cpf:
             for arquivo in arquivos_rg_cpf:
-                url = salvar_arquivo_drive(arquivo,
+                url = salvar_arquivo_drive(
+                    arquivo, folder_id, cpf, nome, "RG_CPF"
+                )
+                links_rg_cpf.append(url if url else "Falha no upload")
+
+        # Salvar Comprovante de Residência
+        links_comprovante = []
+        if comprovante_residencia:
+            for arquivo in comprovante_residencia:
+                url = salvar_arquivo_drive(
+                    arquivo, folder_id, cpf, nome, "Comprovante"
+                )
+                links_comprovante.append(url if url else "Falha no upload")
+
+        # Salvar dados na Google Sheets
+        sh = gc.open_by_url(sheet_url)
+        worksheet = sh.sheet1
+        dados = [
+            nome,
+            cpf_format,
+            rg,
+            celular_format,
+            email,
+            data_nascimento_br,
+            cep_format,
+            rua,
+            numero,
+            bairro,
+            cidade,
+            estado,
+            "; ".join(links_rg_cpf),
+            "; ".join(links_comprovante),
+            datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+        ]
+        worksheet.append_row(dados)
+        st.success("Cadastro realizado com sucesso!")
+        st.write("RG/CPF enviados:", links_rg_cpf)
+        st.write("Comprovante de residência enviado:", links_comprovante)
+
+# =============== VISUALIZA
