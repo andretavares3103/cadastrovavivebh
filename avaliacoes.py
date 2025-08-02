@@ -88,7 +88,7 @@ with st.form("cadastro_prof"):
     data_nascimento = st.date_input("Data de nascimento *", format="DD/MM/YYYY")
 
     st.markdown("#### **Endereço**")
-    cep = st.text_input("CEP", max_chars=9, help="Apenas números")
+    cep = st.text_input("CEP *", max_chars=9, help="Apenas números")
     rua = st.text_input("Rua")
     numero = st.text_input("Número")
     bairro = st.text_input("Bairro")
@@ -113,7 +113,8 @@ if submitted:
         "RG": rg,
         "Celular": celular,
         "E-mail": email,
-        "Data de nascimento": data_nascimento
+        "Data de nascimento": data_nascimento,
+        "CEP": cep   # AGORA É OBRIGATÓRIO!
     }
     faltando = [campo for campo, valor in obrigatorios.items() if not valor]
     if faltando:
@@ -126,7 +127,7 @@ if submitted:
         st.error("CPF inválido! Deve conter 11 dígitos.")
     elif not validar_celular(celular):
         st.error("Celular inválido! Deve conter DDD e número.")
-    elif cep and not validar_cep(cep):
+    elif not validar_cep(cep):
         st.error("CEP inválido! Deve conter 8 dígitos.")
     elif not SHEET_OK:
         st.error("Configure o acesso à Google API no menu lateral.")
@@ -174,14 +175,4 @@ if submitted:
                 datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             ]
             worksheet.append_row(dados)
-            st.success("Cadastro realizado com sucesso!")
-            st.write("RG/CPF enviados:", links_rg_cpf)
-            st.write("Comprovante de residência enviado:", links_comprovante)
-
-# =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
-st.markdown("---")
-if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
-    sh = gc.open_by_url(sheet_url)
-    worksheet = sh.sheet1
-    df = pd.DataFrame(worksheet.get_all_records())
-    st.dataframe(df, use_container_width=True)
+            st.success("Cadastro realizado com suce
