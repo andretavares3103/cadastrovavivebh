@@ -13,8 +13,8 @@ from googleapiclient.http import MediaIoBaseUpload
 # ======== CONFIGURAÇÃO GOOGLE ==========
 st.sidebar.header("Configuração Google API")
 google_creds_file = st.sidebar.file_uploader("Upload credenciais Google (JSON)", type="json")
-sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/SEU_ID_AQUI")
-folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="PASTA_ID_AQUI")
+sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo/edit?gid=0#gid=0")
+folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="1ABCdEfgHiJklmnOPqRsTuvWxyZ")
 
 if google_creds_file:
     creds = Credentials.from_service_account_info(
@@ -188,5 +188,6 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
