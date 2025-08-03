@@ -17,10 +17,12 @@ sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.goo
 folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="1ABCdEfgHiJklmnOPqRsTuvWxyZ")
 
 if google_creds_file:
+    import json
     creds = Credentials.from_service_account_info(
-        pd.read_json(google_creds_file).to_dict(),
+        json.load(google_creds_file),
         scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     )
+
     gc = gspread.authorize(creds)
     service_drive = build('drive', 'v3', credentials=creds)
     SHEET_OK = True
@@ -188,6 +190,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
