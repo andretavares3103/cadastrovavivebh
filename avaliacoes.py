@@ -10,6 +10,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
+# ======== CONFIGURAÇÃO GOOGLE ==========
 st.sidebar.header("Configuração Google API")
 google_creds_file = st.sidebar.file_uploader("Upload credenciais Google (JSON)", type="json")
 sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo/edit?gid=0#gid=0/edit")
@@ -87,7 +88,7 @@ with st.form("cadastro_prof"):
     celular = st.text_input("Celular *", max_chars=15, help="Apenas números")
     email = st.text_input("E-mail *")
     
-    # Aceita apenas quem já tem 18 anos completos
+    # Permite selecionar datas até HOJE - 18 anos
     data_limite = date.today() - timedelta(days=18*365)
     data_nascimento = st.date_input(
         "Data de nascimento *",
@@ -107,7 +108,6 @@ with st.form("cadastro_prof"):
     arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
     comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
 
-    # SUBMIT BUTTON dentro do formulário!
     submitted = st.form_submit_button("Finalizar Cadastro")
 
 if submitted:
@@ -123,7 +123,7 @@ if submitted:
         "Celular": celular,
         "E-mail": email,
         "Data de nascimento": data_nascimento,
-        "CEP": cep   # OBRIGATÓRIO!
+        "CEP": cep
     }
     faltando = [campo for campo, valor in obrigatorios.items() if not valor]
     if faltando:
@@ -141,10 +141,16 @@ if submitted:
     elif not SHEET_OK:
         st.error("Configure o acesso à Google API no menu lateral.")
     else:
-        # Confere se tem pelo menos 18 anos completos
-        if data_nascimento > data_limite:
-            st.error("É necessário ter pelo menos 18 anos completos para se cadastrar.")
+        # Validação de idade final e de data futura
+        hoje = date.today()
+        idade = hoje.year - data_nascimento.year - ((hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
+        if data_nascimento > hoje:
+            st.error("A data de nascimento não pode ser no futuro.")
+        elif idade < 18:
+            st.error("É necessário ter pelo menos 18 anos para se cadastrar.")
         else:
+            # prossegue para salvar...
+
             # Salvar RG/CPF
             links_rg_cpf = []
             for arquivo in arquivos_rg_cpf:
