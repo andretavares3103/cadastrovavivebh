@@ -86,7 +86,11 @@ with st.form("cadastro_prof"):
     rg = st.text_input("RG *")
     celular = st.text_input("Celular *", max_chars=15, help="Apenas números")
     email = st.text_input("E-mail *")
-    
+    data_nascimento = st.date_input(
+    "Data de nascimento *",
+    format="DD/MM/YYYY",
+    value=date(2000, 1, 1)
+    )
 
     st.markdown("#### **Endereço**")
     cep = st.text_input("CEP *", max_chars=9, help="Apenas números")
@@ -181,5 +185,6 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
