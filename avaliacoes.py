@@ -77,6 +77,12 @@ def validar_cep(cep):
     cep = re.sub(r'\D', '', cep)
     return len(cep) == 8
 
+def validar_data_nascimento(data_str):
+    try:
+        return datetime.strptime(data_str, "%d/%m/%Y")
+    except:
+        return None
+
 st.title("Cadastro de Profissional (Google Sheets + Drive)")
 
 with st.form("cadastro_prof"):
@@ -86,12 +92,8 @@ with st.form("cadastro_prof"):
     rg = st.text_input("RG *")
     celular = st.text_input("Celular *", max_chars=15, help="Apenas números")
     email = st.text_input("E-mail *")
-    data_nascimento = st.date_input(
-    "Data de nascimento *",
-    format="DD/MM/YYYY",
-    value=date(1950, 1, 1)
-    )
-
+    data_nascimento = st.text_input("Data de nascimento *", placeholder="DD/MM/AAAA")
+    
     st.markdown("#### **Endereço**")
     cep = st.text_input("CEP *", max_chars=9, help="Apenas números")
     rua = st.text_input("Rua")
@@ -109,7 +111,7 @@ with st.form("cadastro_prof"):
 if submitted:
     cpf_format = formatar_cpf(cpf)
     celular_format = formatar_celular(celular)
-    data_nascimento_br = data_nascimento.strftime("%d/%m/%Y")
+    data_nasc_dt = validar_data_nascimento(data_nascimento)
     cep_format = formatar_cep(cep)
 
     obrigatorios = {
@@ -124,6 +126,8 @@ if submitted:
     faltando = [campo for campo, valor in obrigatorios.items() if not valor]
     if faltando:
         st.error("Preencha todos os campos obrigatórios: " + ", ".join(faltando))
+    elif not data_nasc_dt:
+        st.error("Data de nascimento inválida! Use o formato DD/MM/AAAA.")
     elif not arquivos_rg_cpf:
         st.error("É obrigatório anexar pelo menos 1 arquivo de RG/CPF (frente e verso).")
     elif not comprovante_residencia:
@@ -162,7 +166,7 @@ if submitted:
             rg,
             celular_format,
             email,
-            data_nascimento_br,
+            data_nasc_dt.strftime("%d/%m/%Y"),
             cep_format,
             rua,
             numero,
@@ -185,7 +189,3 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
-
-
-
-
