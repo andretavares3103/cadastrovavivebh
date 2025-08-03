@@ -89,10 +89,12 @@ with st.form("cadastro_prof"):
     email = st.text_input("E-mail *")
     
     # Permite selecionar datas até HOJE - 18 anos
+    from datetime import date, timedelta
+    
     data_limite = date.today() - timedelta(days=18*365)
     data_nascimento = st.date_input(
         "Data de nascimento *",
-        value=data_limite,              # <-- valor default igual ao limite
+        value=data_limite,  # sempre dentro do limite!
         format="DD/MM/YYYY",
         max_value=data_limite
     )
@@ -199,4 +201,5 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
