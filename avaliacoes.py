@@ -91,7 +91,6 @@ with st.form("cadastro_prof"):
     data_nascimento = st.date_input(
         "Data de nascimento *",
         format="DD/MM/YYYY",
-        value=date(2000, 1, 1)
     )
 
     st.markdown("#### **Endereço**")
@@ -187,3 +186,4 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
