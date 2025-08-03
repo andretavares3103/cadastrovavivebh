@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from io import BytesIO
 
 # Google Auth/Sheets/Drive
@@ -87,7 +87,15 @@ with st.form("cadastro_prof"):
     rg = st.text_input("RG *")
     celular = st.text_input("Celular *", max_chars=15, help="Apenas números")
     email = st.text_input("E-mail *")
-    data_nascimento = st.date_input("Data de nascimento *", format="DD/MM/YYYY")
+    
+    # --- AJUSTE DA DATA DE NASCIMENTO: só permite quem já tem 18 anos completos ---
+    data_limite = date.today() - timedelta(days=18*365)
+    data_nascimento = st.date_input(
+        "Data de nascimento *",
+        format="DD/MM/YYYY",
+        max_value=data_limite
+    )
+    # ------------------------------------------------------------------------------
 
     st.markdown("#### **Endereço**")
     cep = st.text_input("CEP *", max_chars=9, help="Apenas números")
@@ -134,11 +142,10 @@ if submitted:
     elif not SHEET_OK:
         st.error("Configure o acesso à Google API no menu lateral.")
     else:
-        # Validação de idade mínima
         hoje = date.today()
         idade = hoje.year - data_nascimento.year - ((hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
-        if idade < 18:
-            st.error("É necessário ter pelo menos 18 anos para se cadastrar.")
+        if data_nascimento > data_limite:
+            st.error("É necessário ter pelo menos 18 anos completos para se cadastrar.")
         else:
             # prossegue para salvar...
 
@@ -190,8 +197,3 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
-
-
-
-
-
