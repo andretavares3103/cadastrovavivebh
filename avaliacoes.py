@@ -31,19 +31,24 @@ else:
 
 def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
     if SHEET_OK and folder_id and file is not None:
-        arquivo_nomeado = f"{cpf}_{nome}_{doc_type}_{file.name}"
-        file_metadata = {
-            'name': arquivo_nomeado,
-            'parents': [folder_id]
-        }
-        media = MediaIoBaseUpload(BytesIO(file.read()), mimetype=file.type)
-        uploaded_file = service_drive.files().create(
-            body=file_metadata, 
-            media_body=media, 
-            fields='id,webViewLink'
-        ).execute()
-        return uploaded_file.get('webViewLink')
+        try:
+            arquivo_nomeado = f"{cpf}_{nome}_{doc_type}_{file.name}"
+            file_metadata = {
+                'name': arquivo_nomeado,
+                'parents': [folder_id]
+            }
+            media = MediaIoBaseUpload(BytesIO(file.read()), mimetype=file.type)
+            uploaded_file = service_drive.files().create(
+                body=file_metadata, 
+                media_body=media, 
+                fields='id,webViewLink'
+            ).execute()
+            return uploaded_file.get('webViewLink')
+        except Exception as e:
+            st.error(f"Erro ao salvar no Google Drive: {e}")
+            return None
     return None
+
 
 def formatar_cpf(valor):
     valor = re.sub(r'\D', '', valor)
@@ -189,6 +194,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
