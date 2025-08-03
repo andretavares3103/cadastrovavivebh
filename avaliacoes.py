@@ -92,10 +92,10 @@ with st.form("cadastro_prof"):
     data_limite = date.today() - timedelta(days=18*365)
     data_nascimento = st.date_input(
         "Data de nascimento *",
+        value=data_limite,              # <-- valor default igual ao limite
         format="DD/MM/YYYY",
         max_value=data_limite
     )
-
     st.markdown("#### **Endereço**")
     cep = st.text_input("CEP *", max_chars=9, help="Apenas números")
     rua = st.text_input("Rua")
@@ -199,3 +199,4 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
