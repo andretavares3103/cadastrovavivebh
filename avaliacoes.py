@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from io import BytesIO
 
 # Google Auth/Sheets/Drive
@@ -88,16 +88,12 @@ with st.form("cadastro_prof"):
     celular = st.text_input("Celular *", max_chars=15, help="Apenas números")
     email = st.text_input("E-mail *")
     
-    # Permite selecionar datas até HOJE - 18 anos
-    from datetime import date, timedelta
-    
-    data_limite = date.today() - timedelta(days=18*365)
     data_nascimento = st.date_input(
         "Data de nascimento *",
-        value=data_limite,  # sempre dentro do limite!
         format="DD/MM/YYYY",
-        max_value=data_limite
+        value=date(2000, 1, 1)  # valor default apenas
     )
+
     st.markdown("#### **Endereço**")
     cep = st.text_input("CEP *", max_chars=9, help="Apenas números")
     rua = st.text_input("Rua")
@@ -143,7 +139,6 @@ if submitted:
     elif not SHEET_OK:
         st.error("Configure o acesso à Google API no menu lateral.")
     else:
-        # Validação de idade final e de data futura
         hoje = date.today()
         idade = hoje.year - data_nascimento.year - ((hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
         if data_nascimento > hoje:
@@ -201,5 +196,3 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
-
-
