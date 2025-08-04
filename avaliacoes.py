@@ -3,6 +3,7 @@ import pandas as pd
 import re
 from datetime import datetime, date
 from io import BytesIO
+import json
 
 # Google Auth/Sheets/Drive
 import gspread
@@ -12,31 +13,18 @@ from googleapiclient.http import MediaIoBaseUpload
 
 # ======== CONFIGURAÇÃO GOOGLE ==========
 st.sidebar.header("Configuração Google API")
-import streamlit as st
-from google.oauth2.service_account import Credentials
+sheet_url = st.sidebar.text_input("URL da Google Sheet", value="...")
+folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="...")
 
-import json
-
+# Agora, sempre pegue as credenciais do st.secrets!
 creds = Credentials.from_service_account_info(
     json.loads(st.secrets["GOOGLE_CREDS"]),
-    scopes=[
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
+    scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 )
+gc = gspread.authorize(creds)
+service_drive = build('drive', 'v3', credentials=creds)
+SHEET_OK = True
 
-sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo/edit?gid=0#gid=0")
-folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="1oYZA1foKNTapq74fCr2VDG9s4OUF3qzt")
-
-if google_creds_file:
-    import json
-    creds = Credentials.from_service_account_info(
-        json.load(google_creds_file),
-        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    )
-    gc = gspread.authorize(creds)
-    service_drive = build('drive', 'v3', credentials=creds)
-    SHEET_OK = True
 else:
     creds = gc = service_drive = None
     SHEET_OK = False
@@ -209,6 +197,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
