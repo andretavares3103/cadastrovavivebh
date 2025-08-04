@@ -16,7 +16,7 @@ import streamlit as st
 from google.oauth2.service_account import Credentials
 
 creds = Credentials.from_service_account_info(
-    st.secrets["google"],
+    st.secrets["GOOGLE_CREDS"],
     scopes=[
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
@@ -206,6 +206,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
