@@ -16,18 +16,19 @@ st.sidebar.header("Configuração Google API")
 sheet_url = st.sidebar.text_input("URL da Google Sheet", value="...")
 folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="...")
 
-# Agora, sempre pegue as credenciais do st.secrets!
-creds = Credentials.from_service_account_info(
-    json.loads(st.secrets["GOOGLE_CREDS"]),
-    scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-)
-gc = gspread.authorize(creds)
-service_drive = build('drive', 'v3', credentials=creds)
-SHEET_OK = True
-
+if google_creds_file:
+    import json
+    creds = Credentials.from_service_account_info(
+        json.load(google_creds_file),
+        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    )
+    gc = gspread.authorize(creds)
+    service_drive = build('drive', 'v3', credentials=creds)
+    SHEET_OK = True
 else:
     creds = gc = service_drive = None
     SHEET_OK = False
+
 
 def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
     if SHEET_OK and folder_id and file is not None:
@@ -197,6 +198,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
