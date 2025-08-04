@@ -12,20 +12,28 @@ from googleapiclient.http import MediaIoBaseUpload
 
 # ======== CONFIGURAÇÃO GOOGLE ==========
 st.sidebar.header("Configuração Google API")
-google_creds_file = st.sidebar.file_uploader("Upload credenciais Google (JSON)", type="json")
-sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo/edit?gid=0#gid=0")
-folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="1oYZA1foKNTapq74fCr2VDG9s4OUF3qzt")
+sheet_url = st.sidebar.text_input(
+    "URL da Google Sheet",
+    value="https://docs.google.com/spreadsheets/d/1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo/edit?gid=0#gid=0"
+)
+folder_id = st.sidebar.text_input(
+    "ID da pasta Google Drive para anexos",
+    value="1oYZA1foKNTapq74fCr2VDG9s4OUF3qzt"
+)
 
-if google_creds_file:
-    import json
-    creds = Credentials.from_service_account_info(
-        json.load(google_creds_file),
-        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    )
+# ------- Carrega credenciais fixas --------
+import json
+try:
+    with open("cadastro-vavive-66ab12d0b9fd.json", "r") as f:
+        creds = Credentials.from_service_account_info(
+            json.load(f),
+            scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        )
     gc = gspread.authorize(creds)
     service_drive = build('drive', 'v3', credentials=creds)
     SHEET_OK = True
-else:
+except Exception as e:
+    st.error(f"Falha ao carregar credenciais: {e}")
     creds = gc = service_drive = None
     SHEET_OK = False
 
@@ -42,15 +50,13 @@ def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
                 body=file_metadata, 
                 media_body=media, 
                 fields='id,webViewLink',
-                supportsAllDrives=True   # <-- ESSA LINHA É IMPORTANTE!
+                supportsAllDrives=True
             ).execute()
             return uploaded_file.get('webViewLink')
         except Exception as e:
             st.error(f"Erro ao salvar no Google Drive: {e}")
             return None
     return None
-
-
 
 def formatar_cpf(valor):
     valor = re.sub(r'\D', '', valor)
@@ -146,7 +152,7 @@ if submitted:
     elif not validar_cep(cep):
         st.error("CEP inválido! Deve conter 8 dígitos.")
     elif not SHEET_OK:
-        st.error("Configure o acesso à Google API no menu lateral.")
+        st.error("Falha na autenticação com Google. Revise suas configurações.")
     else:
         # Salvar RG/CPF
         links_rg_cpf = []
@@ -196,12 +202,3 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
-
-
-
-
-
-
-
-
-
