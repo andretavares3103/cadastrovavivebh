@@ -52,6 +52,7 @@ def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
 
 
 
+
 def formatar_cpf(valor):
     valor = re.sub(r'\D', '', valor)
     if len(valor) == 11:
@@ -196,6 +197,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
