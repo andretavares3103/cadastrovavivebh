@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "cadastro-vavive-bh",
+  "private_key_id": "f58ab8c5a8f24c85efc269aa9aa511d09147557c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDShXGe9720YkGG\nAk9Jr+yW0WxxirK6M0l7RhaevNXsqL4HW1jGRQ0nEY8kMuvmtkhRjAmDh9QKlrbB\ns5N4+Bpfb7iS7ZW488xpDq4q1eS+jJV2fyl0v/WbuWOQ5haGsRlU2UF4A7umT4Ug\ndE8y4u2BfThlq2OyNwGvKBZikWZJYb8SNCRu7vVpGPh+IN+bnbiASwTscjpwZ/od\nqh4w8tN+S9ypmEoxucL1YD3eY2tkXVNHL6z93e1qtA/CFzjYB0t7GypCzF7MO66d\nMKk97GIa+KZeoPuw8Jy85WeIINMSV659nzEyuglWX+7OzxGzBVQuSZn1Fzp7HOwG\n0G0eHvi1AgMBAAECggEADlIckLtP8NbkQoOitXkIXO7ByUGC906o14AaPCcisvbR\nonomIlVX199bv5MlNVcTY/9k4Ekw9UgbsOE7OCCXLq8mElH40ZGSx1dueqR9QIcb\nXb8Nvg7sMXEy4uGms6KVfg5KDqohAucS6nUZtB+iwiBstzcppi8UEsBlMW8BqHPO\n+PhC6mt1d1pwCHmlO+wYEKAm2QbGyHMEk4bo87YNbY/5Z0aI0irtWFSWOBbTTZi8\nPfQ50rjrcq9KxMZvw4+dk+flO/jhk/2ZQU7KBbaxZ+Whb7JAiV+wk78LXA9iDobS\n7/PEE00PwXSntm7gaj1GumyCV9THoffr6BDFqt7sYQKBgQD1cJKw+6oNrLojDorM\nq2cGRO5tAJaSPVLO2cXuYSOhf1i2eIXAQvZtHr+WUGlm1c+rnaVCNiDfHeExUm6M\n+1STP5b70TOUQguQa0slVActCZTsONxxveDFGcAWExuf/hMZo3UJB97BKSxXaatQ\n0YqIVm1yZ7rxJ52rLNuzYSNSJQKBgQDblEHDOo1jh+RAmepoBnwBk9P8gY+8ayOB\nCuZtbc7EJjQur3uFZ1/vlRy2oxiXjcuJg5h/m8bsO5ygUfC+gWcnKZBPB3amhiOa\n1hWsikFJjZfAinxkm59wsQ3iNrjNLZ4Hae4Nid+r6MSyzzG8Klt0dBfx5lvPWwuI\n3DbCAimfUQKBgD9E26uf1EBeLEVpNEJ6VL56+nNC2Y2tHTGRVcKTa9nvt/ChtOjQ\n2jFa4cxfwivuJfB5XOZqiaK6UxihxTm2eCDVHZigXwly1QRPhDmFJaxocelK5xiy\n98QXVTrbhh2CI25SgpLnYnaspG+MH8tfmLR4gxIgx0HvEmfT0na1LaO5AoGACqr5\nRvLhS6SegkT4DnXCMJFuCyaARTcvUmWlLEvZb84rWtlLtv9+ubUU4AqsdzB8YwHx\ntsFquK9svJ0+hQLkcBKk4DIMoaqCsFMWWnudEGXAqaoQwRKOfHsdoY/nCpDczJ9o\n4V+Bbmiwpb9LO0kTiGTbhPUcIMbbmJqaTnKscwECgYEA1qKowCA0uafbJViEnzW+\nnMlZsWajdZ30Bkaj3hzLdsjxWx8RpWM68SQ1tZFFMq8w227itgs6GFO4ULj/p9z7\nj2VFdImi688ITIjtXGOsuSniEbzDjyU19Fl+vFUNKKcIevmSKTCrwdaoJpObgknR\ngtmU5OYwQbSf2/4E4gOSMMI=\n-----END PRIVATE KEY-----\n",
+  "client_email": "cadastrovavivebh@cadastro-vavive-bh.iam.gserviceaccount.com",
+  "client_id": "103666718250461377487",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cadastrovavivebh%40cadastro-vavive-bh.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
