@@ -24,7 +24,7 @@ folder_id = st.sidebar.text_input(
 # ------- Carrega credenciais fixas --------
 import json
 try:
-    with open("cadastro-vavive-66ab12d0b9fd.json", "r") as f:
+    with open("cadastro-vavive-bh-f58ab8c5a8f2.json", "r") as f:
         creds = Credentials.from_service_account_info(
             json.load(f),
             scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -202,3 +202,4 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
