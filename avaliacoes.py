@@ -22,6 +22,11 @@ creds = Credentials.from_service_account_info(
 )
 import gspread
 gc = gspread.authorize(creds)
+
+
+
+
+
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 service_drive = build('drive', 'v3', credentials=creds)
@@ -191,4 +196,5 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
