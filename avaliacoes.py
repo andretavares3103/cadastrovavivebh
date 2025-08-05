@@ -205,6 +205,18 @@ if submitted:
 
 
 
+            
+            import re
+            
+            # Faz a extração dos campos da string selecionada
+            m = re.match(r"(\d{2}/\d{2}/\d{4}) - ([\d:]+ às [\d:]+) \((.*?)\)", horario_selecionado)
+            if m:
+                data_selecionada = m.group(1)      # Ex: 10/08/2024
+                horario = m.group(2)               # Ex: 10:00 às 12:00
+                dia_semana = m.group(3)            # Ex: sábado
+            else:
+                data_selecionada = horario = dia_semana = ""
+
 
           
 
@@ -226,6 +238,9 @@ if submitted:
                 estado,
                 "; ".join(links_rg_cpf),
                 "; ".join(links_comprovante),
+                data_selecionada,  # NOVO
+                horario,           # NOVO
+                dia_semana         # NOVO
                 datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             ]
             worksheet.append_row(dados)
@@ -240,6 +255,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
