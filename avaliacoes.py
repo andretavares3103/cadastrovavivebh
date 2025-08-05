@@ -116,8 +116,6 @@ with st.form("cadastro_prof"):
     arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
     comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
 
-    submitted = st.form_submit_button("Finalizar Cadastro")
-
 
 # --- Configuração da sua planilha de horários
 HORARIOS_SHEET_ID = "1-5djeo_z3fluYEfxCzVngGmLbLa0tA2nT8b_Edn-tIM"
@@ -146,6 +144,7 @@ if not disponiveis.empty:
 else:
     st.warning("Nenhum horário disponível no momento.")
 
+    submitted = st.form_submit_button("Finalizar Cadastro")
 
 
 
@@ -234,6 +233,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
