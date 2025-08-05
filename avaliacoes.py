@@ -135,7 +135,7 @@ disponiveis["Opção"] = (
 )
 
 # --- Exibe opções para seleção
-st.title("Selecione um horário disponível (Treinamento presencial obrigatório)")
+st.title("Treinamento Presencial Obrigatório (Selecione um horário disponível)")
 
 if not disponiveis.empty:
     horario_escolhido = st.selectbox(
@@ -234,6 +234,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
