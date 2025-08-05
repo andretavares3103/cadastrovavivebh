@@ -1,33 +1,26 @@
 import streamlit as st
-import pandas as pd
-import re
-from datetime import datetime, date
-from io import BytesIO
-
-# Google Auth/Sheets/Drive
-import gspread
+import json
 from google.oauth2.service_account import Credentials
+import gspread
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload
 
-# ======== CONFIGURAÇÃO GOOGLE ==========
-st.sidebar.header("Configuração Google API")
-google_creds_file = st.sidebar.file_uploader("Upload credenciais Google (JSON)", type="json")
-sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/10PiH_xBokxZUH-hVvLsrUmNNQnpsfkdOwLhjNkAibnA/edit?gid=0#gid=0")
-folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="135edeOCoqfVtV1AOTdUYKhgivom07InY")
+creds_dict = json.loads(st.secrets["GOOGLE_CREDS"])
+creds = Credentials.from_service_account_info(
+    creds_dict,
+    scopes=[
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+)
+gc = gspread.authorize(creds)
+service_drive = build('drive', 'v3', credentials=creds)
+SHEET_OK = True
 
-if google_creds_file:
-    import json
-    creds = Credentials.from_service_account_info(
-        json.load(google_creds_file),
-        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    )
-    gc = gspread.authorize(creds)
-    service_drive = build('drive', 'v3', credentials=creds)
-    SHEET_OK = True
-else:
-    creds = gc = service_drive = None
-    SHEET_OK = False
+# IDs fixos
+SHEET_ID = "10PiH_xBokxZUH-hVvLsrUmNNQnpsfkdOwLhjNkAibnA"
+FOLDER_ID = "135edeOCoqfVtV1AOTdUYKhgivom07InY"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
+
 
 def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
     if SHEET_OK and folder_id and file is not None:
@@ -196,6 +189,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
