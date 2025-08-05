@@ -50,9 +50,12 @@ def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
             ).execute()
             return uploaded_file.get('webViewLink')
         except Exception as e:
-            st.error(f"Erro ao salvar no Google Drive: {e}")
+            import traceback
+            tb = traceback.format_exc()
+            st.error(f"Erro ao salvar no Google Drive: {e}\n\nTraceback:\n{tb}")
             return None
     return None
+
 
 def formatar_cpf(valor):
     valor = re.sub(r'\D', '', valor)
@@ -196,6 +199,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
