@@ -6,8 +6,8 @@ from io import BytesIO
 import json
 
 # ========== CONFIGURAÇÕES FIXAS ==========
-SHEET_ID = "1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo"
-FOLDER_ID = "1oYZA1foKNTapq74fCr2VDG9s4OUF3qzt"
+SHEET_ID = "10PiH_xBokxZUH-hVvLsrUmNNQnpsfkdOwLhjNkAibnA"
+FOLDER_ID = "135edeOCoqfVtV1AOTdUYKhgivom07InY"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
 
 # ======= CREDENCIAIS GOOGLE PELO st.secrets =======
@@ -191,3 +191,4 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
