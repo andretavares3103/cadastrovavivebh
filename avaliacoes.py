@@ -1,15 +1,8 @@
 import streamlit as st
 import pandas as pd
 import re
-from datetime import datetime
+from datetime import datetime, date
 from io import BytesIO
-import json
-
-# IDs fixos
-SHEET_ID = "1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo"
-FOLDER_ID = "0AI9gYpCBukfkUk9PVA"
-SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
-
 
 # Google Auth/Sheets/Drive
 import gspread
@@ -17,22 +10,24 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
-# ====== CONFIGURAÇÃO GOOGLE CLOUD SECRETS ======
-if "GOOGLE_CREDS" not in st.secrets:
-    st.error("Credenciais da API Google não encontradas. Configure no st.secrets['GOOGLE_CREDS'].")
-    st.stop()
+# ======== CONFIGURAÇÃO GOOGLE ==========
+st.sidebar.header("Configuração Google API")
+google_creds_file = st.sidebar.file_uploader("Upload credenciais Google (JSON)", type="json")
+sheet_url = st.sidebar.text_input("URL da Google Sheet", value="https://docs.google.com/spreadsheets/d/1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo/edit?gid=0#gid=0")
+folder_id = st.sidebar.text_input("ID da pasta Google Drive para anexos", value="1oYZA1foKNTapq74fCr2VDG9s4OUF3qzt")
 
-creds_dict = json.loads(st.secrets["GOOGLE_CREDS"])
-creds = Credentials.from_service_account_info(
-    creds_dict,
-    scopes=[
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ]
-)
-gc = gspread.authorize(creds)
-service_drive = build('drive', 'v3', credentials=creds)
-SHEET_OK = True
+if google_creds_file:
+    import json
+    creds = Credentials.from_service_account_info(
+        json.load(google_creds_file),
+        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    )
+    gc = gspread.authorize(creds)
+    service_drive = build('drive', 'v3', credentials=creds)
+    SHEET_OK = True
+else:
+    creds = gc = service_drive = None
+    SHEET_OK = False
 
 def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
     if SHEET_OK and folder_id and file is not None:
@@ -46,15 +41,15 @@ def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
             uploaded_file = service_drive.files().create(
                 body=file_metadata, 
                 media_body=media, 
-                fields='id,webViewLink'
+                fields='id,webViewLink',
+                supportsAllDrives=True   # <-- ESSA LINHA É IMPORTANTE!
             ).execute()
             return uploaded_file.get('webViewLink')
         except Exception as e:
-            import traceback
-            tb = traceback.format_exc()
-            st.error(f"Erro ao salvar no Google Drive: {e}\n\nTraceback:\n{tb}")
+            st.error(f"Erro ao salvar no Google Drive: {e}")
             return None
     return None
+
 
 
 def formatar_cpf(valor):
@@ -150,12 +145,14 @@ if submitted:
         st.error("Celular inválido! Deve conter DDD e número.")
     elif not validar_cep(cep):
         st.error("CEP inválido! Deve conter 8 dígitos.")
+    elif not SHEET_OK:
+        st.error("Configure o acesso à Google API no menu lateral.")
     else:
         # Salvar RG/CPF
         links_rg_cpf = []
         for arquivo in arquivos_rg_cpf:
             url = salvar_arquivo_drive(
-                arquivo, FOLDER_ID, cpf, nome, "RG_CPF"
+                arquivo, folder_id, cpf, nome, "RG_CPF"
             )
             links_rg_cpf.append(url if url else "Falha no upload")
 
@@ -163,12 +160,12 @@ if submitted:
         links_comprovante = []
         for arquivo in comprovante_residencia:
             url = salvar_arquivo_drive(
-                arquivo, FOLDER_ID, cpf, nome, "Comprovante"
+                arquivo, folder_id, cpf, nome, "Comprovante"
             )
             links_comprovante.append(url if url else "Falha no upload")
 
         # Salvar dados na Google Sheets
-        sh = gc.open_by_key(SHEET_ID)
+        sh = gc.open_by_url(sheet_url)
         worksheet = sh.sheet1
         dados = [
             nome,
@@ -195,10 +192,11 @@ if submitted:
 # =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
 st.markdown("---")
 if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
-    sh = gc.open_by_key(SHEET_ID)
+    sh = gc.open_by_url(sheet_url)
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
