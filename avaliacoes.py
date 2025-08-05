@@ -93,21 +93,21 @@ def validar_data_nascimento(data_str):
     except:
         return None
 
-st.title("Cadastro de Profissional (Google Sheets + Drive)")
+st.title("Recrutamento e treinamento de Profissional VAVIVÊ BH")
 
 with st.form("cadastro_prof"):
     st.markdown("#### **Informações Pessoais**")
-    nome = st.text_input("Nome *")
-    cpf = st.text_input("CPF *", max_chars=14, help="Apenas números")
-    rg = st.text_input("RG *")
-    celular = st.text_input("Celular *", max_chars=15, help="Apenas números")
-    email = st.text_input("E-mail *")
-    data_nascimento = st.text_input("Data de nascimento *", placeholder="DD/MM/AAAA")
+    nome = st.text_input("*Nome")
+    cpf = st.text_input("*CPF sem pontos ou traços", max_chars=14, help="Apenas números")
+    rg = st.text_input("*RG")
+    celular = st.text_input("*Celular", max_chars=15, help="Apenas números")
+    email = st.text_input("*E-mail")
+    data_nascimento = st.text_input("*Data de nascimento (Incluir barras)", placeholder="DD/MM/AAAA")
     
     st.markdown("#### **Endereço**")
-    cep = st.text_input("CEP *", max_chars=9, help="Apenas números")
+    cep = st.text_input("*CEP", max_chars=9, help="Apenas números")
     rua = st.text_input("Rua")
-    numero = st.text_input("Número")
+    numero = st.text_input("*Número")
     bairro = st.text_input("Bairro")
     cidade = st.text_input("Cidade")
     estado = st.text_input("Estado")
@@ -135,7 +135,7 @@ disponiveis["Opção"] = (
 )
 
 # --- Exibe opções para seleção
-st.title("Selecione um horário disponível")
+st.title("Selecione um horário disponível (Treinamento presencial obrigatório)")
 
 if not disponiveis.empty:
     horario_escolhido = st.selectbox(
@@ -234,6 +234,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
