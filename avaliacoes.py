@@ -23,32 +23,6 @@ creds = Credentials.from_service_account_info(
 import gspread
 gc = gspread.authorize(creds)
 
-# --- Configuração da sua planilha de horários
-HORARIOS_SHEET_ID = "1-5djeo_z3fluYEfxCzVngGmLbLa0tA2nT8b_Edn-tIM"
-ABA_HORARIOS = "Página1"
-
-# --- Carrega os horários disponíveis
-sh = gc.open_by_key(HORARIOS_SHEET_ID)
-worksheet = sh.worksheet(ABA_HORARIOS)
-df_horarios = pd.DataFrame(worksheet.get_all_records())
-
-# --- Filtra horários disponíveis
-disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
-disponiveis["Opção"] = disponiveis["Data"] + " - " + disponiveis["Horario"]
-
-# --- Exibe opções para seleção
-st.title("Selecione um horário disponível")
-
-if not disponiveis.empty:
-    horario_escolhido = st.selectbox(
-        "Horários disponíveis:",
-        disponiveis["Opção"].tolist()
-    )
-    st.success(f"Horário selecionado: {horario_escolhido}")
-else:
-    st.warning("Nenhum horário disponível no momento.")
-
-
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
@@ -187,6 +161,36 @@ if submitted:
                 )
                 links_comprovante.append(url if url else "Falha no upload")
 
+
+
+
+            
+            # --- Configuração da sua planilha de horários
+            HORARIOS_SHEET_ID = "1-5djeo_z3fluYEfxCzVngGmLbLa0tA2nT8b_Edn-tIM"
+            ABA_HORARIOS = "Página1"
+            
+            # --- Carrega os horários disponíveis
+            sh = gc.open_by_key(HORARIOS_SHEET_ID)
+            worksheet = sh.worksheet(ABA_HORARIOS)
+            df_horarios = pd.DataFrame(worksheet.get_all_records())
+            
+            # --- Filtra horários disponíveis
+            disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
+            disponiveis["Opção"] = disponiveis["Data"] + " - " + disponiveis["Horario"]
+            
+            # --- Exibe opções para seleção
+            st.title("Selecione um horário disponível")
+            
+            if not disponiveis.empty:
+                horario_escolhido = st.selectbox(
+                    "Horários disponíveis:",
+                    disponiveis["Opção"].tolist()
+                )
+                st.success(f"Horário selecionado: {horario_escolhido}")
+            else:
+                st.warning("Nenhum horário disponível no momento.")
+            
+
             # Salvar dados na Google Sheets
             sh = gc.open_by_key(SHEET_ID)
             worksheet = sh.sheet1
@@ -219,6 +223,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
