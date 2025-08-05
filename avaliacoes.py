@@ -1,10 +1,18 @@
 import streamlit as st
+import pandas as pd
+import re
+from datetime import datetime
+from io import BytesIO
 import json
-from google.oauth2.service_account import Credentials
-import gspread
-from googleapiclient.discovery import build
 
+# ========== CONFIGURAÇÕES FIXAS ==========
+SHEET_ID = "1eef9J3LerPGYIFzBtrP68GQbP6dQZy6umG195tGfveo"
+FOLDER_ID = "1oYZA1foKNTapq74fCr2VDG9s4OUF3qzt"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
+
+# ======= CREDENCIAIS GOOGLE PELO st.secrets =======
 creds_dict = json.loads(st.secrets["GOOGLE_CREDS"])
+from google.oauth2.service_account import Credentials
 creds = Credentials.from_service_account_info(
     creds_dict,
     scopes=[
@@ -12,15 +20,12 @@ creds = Credentials.from_service_account_info(
         "https://www.googleapis.com/auth/drive"
     ]
 )
+import gspread
 gc = gspread.authorize(creds)
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
 service_drive = build('drive', 'v3', credentials=creds)
 SHEET_OK = True
-
-# IDs fixos
-SHEET_ID = "10PiH_xBokxZUH-hVvLsrUmNNQnpsfkdOwLhjNkAibnA"
-FOLDER_ID = "135edeOCoqfVtV1AOTdUYKhgivom07InY"
-SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit"
-
 
 def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
     if SHEET_OK and folder_id and file is not None:
@@ -35,15 +40,13 @@ def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
                 body=file_metadata, 
                 media_body=media, 
                 fields='id,webViewLink',
-                supportsAllDrives=True   # <-- ESSA LINHA É IMPORTANTE!
+                supportsAllDrives=True
             ).execute()
             return uploaded_file.get('webViewLink')
         except Exception as e:
             st.error(f"Erro ao salvar no Google Drive: {e}")
             return None
     return None
-
-
 
 def formatar_cpf(valor):
     valor = re.sub(r'\D', '', valor)
@@ -109,11 +112,6 @@ with st.form("cadastro_prof"):
     submitted = st.form_submit_button("Finalizar Cadastro")
 
 if submitted:
-    cpf_format = formatar_cpf(cpf)
-    celular_format = formatar_celular(celular)
-    data_nasc_dt = validar_data_nascimento(data_nascimento)
-    cep_format = formatar_cep(cep)
-
     obrigatorios = {
         "Nome": nome,
         "CPF": cpf,
@@ -126,76 +124,70 @@ if submitted:
     faltando = [campo for campo, valor in obrigatorios.items() if not valor]
     if faltando:
         st.error("Preencha todos os campos obrigatórios: " + ", ".join(faltando))
-    elif not data_nasc_dt:
-        st.error("Data de nascimento inválida! Use o formato DD/MM/AAAA.")
-    elif not arquivos_rg_cpf:
-        st.error("É obrigatório anexar pelo menos 1 arquivo de RG/CPF (frente e verso).")
-    elif not comprovante_residencia:
-        st.error("É obrigatório anexar pelo menos 1 arquivo de comprovante de residência.")
-    elif not validar_cpf(cpf):
-        st.error("CPF inválido! Deve conter 11 dígitos.")
-    elif not validar_celular(celular):
-        st.error("Celular inválido! Deve conter DDD e número.")
-    elif not validar_cep(cep):
-        st.error("CEP inválido! Deve conter 8 dígitos.")
-    elif not SHEET_OK:
-        st.error("Configure o acesso à Google API no menu lateral.")
     else:
-        # Salvar RG/CPF
-        links_rg_cpf = []
-        for arquivo in arquivos_rg_cpf:
-            url = salvar_arquivo_drive(
-                arquivo, folder_id, cpf, nome, "RG_CPF"
-            )
-            links_rg_cpf.append(url if url else "Falha no upload")
+        cpf_format = formatar_cpf(cpf)
+        celular_format = formatar_celular(celular)
+        data_nasc_dt = validar_data_nascimento(data_nascimento)
+        cep_format = formatar_cep(cep)
 
-        # Salvar Comprovante de Residência
-        links_comprovante = []
-        for arquivo in comprovante_residencia:
-            url = salvar_arquivo_drive(
-                arquivo, folder_id, cpf, nome, "Comprovante"
-            )
-            links_comprovante.append(url if url else "Falha no upload")
+        if not data_nasc_dt:
+            st.error("Data de nascimento inválida! Use o formato DD/MM/AAAA.")
+        elif not arquivos_rg_cpf:
+            st.error("É obrigatório anexar pelo menos 1 arquivo de RG/CPF (frente e verso).")
+        elif not comprovante_residencia:
+            st.error("É obrigatório anexar pelo menos 1 arquivo de comprovante de residência.")
+        elif not validar_cpf(cpf):
+            st.error("CPF inválido! Deve conter 11 dígitos.")
+        elif not validar_celular(celular):
+            st.error("Celular inválido! Deve conter DDD e número.")
+        elif not validar_cep(cep):
+            st.error("CEP inválido! Deve conter 8 dígitos.")
+        else:
+            # Salvar RG/CPF
+            links_rg_cpf = []
+            for arquivo in arquivos_rg_cpf:
+                url = salvar_arquivo_drive(
+                    arquivo, FOLDER_ID, cpf, nome, "RG_CPF"
+                )
+                links_rg_cpf.append(url if url else "Falha no upload")
 
-        # Salvar dados na Google Sheets
-        sh = gc.open_by_url(sheet_url)
-        worksheet = sh.sheet1
-        dados = [
-            nome,
-            cpf_format,
-            rg,
-            celular_format,
-            email,
-            data_nasc_dt.strftime("%d/%m/%Y"),
-            cep_format,
-            rua,
-            numero,
-            bairro,
-            cidade,
-            estado,
-            "; ".join(links_rg_cpf),
-            "; ".join(links_comprovante),
-            datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-        ]
-        worksheet.append_row(dados)
-        st.success("Cadastro realizado com sucesso!")
-        st.write("RG/CPF enviados:", links_rg_cpf)
-        st.write("Comprovante de residência enviado:", links_comprovante)
+            # Salvar Comprovante de Residência
+            links_comprovante = []
+            for arquivo in comprovante_residencia:
+                url = salvar_arquivo_drive(
+                    arquivo, FOLDER_ID, cpf, nome, "Comprovante"
+                )
+                links_comprovante.append(url if url else "Falha no upload")
+
+            # Salvar dados na Google Sheets
+            sh = gc.open_by_key(SHEET_ID)
+            worksheet = sh.sheet1
+            dados = [
+                nome,
+                cpf_format,
+                rg,
+                celular_format,
+                email,
+                data_nasc_dt.strftime("%d/%m/%Y"),
+                cep_format,
+                rua,
+                numero,
+                bairro,
+                cidade,
+                estado,
+                "; ".join(links_rg_cpf),
+                "; ".join(links_comprovante),
+                datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            ]
+            worksheet.append_row(dados)
+            st.success("Cadastro realizado com sucesso!")
+            st.write("RG/CPF enviados:", links_rg_cpf)
+            st.write("Comprovante de residência enviado:", links_comprovante)
 
 # =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
 st.markdown("---")
 if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
-    sh = gc.open_by_url(sheet_url)
+    sh = gc.open_by_key(SHEET_ID)
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
