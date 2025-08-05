@@ -130,7 +130,9 @@ df_horarios = pd.DataFrame(worksheet.get_all_records())
 
 # --- Filtra horários disponíveis
 disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
-disponiveis["Opção"] = disponiveis["Data"] + " - " + disponiveis["Horario"]
+disponiveis["Opção"] = (
+    disponiveis["Data"] + " (" + disponiveis["Dia Semana"] + ") - " + disponiveis["Horario"]
+)
 
 # --- Exibe opções para seleção
 st.title("Selecione um horário disponível")
@@ -232,6 +234,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
