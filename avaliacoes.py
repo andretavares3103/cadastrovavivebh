@@ -198,10 +198,6 @@ if submitted:
             else:
                 data_selecionada = horario = dia_semana = ""
 
-
-
-            st.write("Debug dos dados enviados para a planilha:", dados)
-
             # Salvar dados na Google Sheets (na primeira aba da planilha)
             sh = gc.open_by_key(SHEET_ID)
             worksheet = sh.worksheet("Página1")  # <--- aqui salva a referência correta!
@@ -225,8 +221,6 @@ if submitted:
                 dia_semana,        # NOVO
                 datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             ]
-
-
             worksheet.append_row(dados)
             st.success("Cadastro realizado com sucesso!")
             st.write("RG/CPF enviados:", links_rg_cpf)
@@ -239,10 +233,6 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.worksheet("Página1")
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
-
-
-
-
 
 
 
