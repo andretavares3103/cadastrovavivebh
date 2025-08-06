@@ -192,7 +192,7 @@ if submitted:
 
             # Debug: veja qual valor está chegando do selectbox
             st.write("DEBUG: Horário escolhido:", horario_escolhido)
-            m = re.match(r"(\d{2}/\d{2}/\d{4}) \((.*?)\) - (.+)", horario_escolhido)
+            m = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4}) \((.*?)\) - (.+)", horario_escolhido)
             if m:
                 data_selecionada = m.group(1)
                 dia_semana = m.group(2)
@@ -200,6 +200,7 @@ if submitted:
             else:
                 data_selecionada = horario = dia_semana = ""
                 st.warning("Não foi possível extrair data, dia e horário do horário selecionado!")
+
 
             # Salvar dados na Google Sheets (na primeira aba da planilha)
             sh = gc.open_by_key(SHEET_ID)
@@ -236,6 +237,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.worksheet("Página1")
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
