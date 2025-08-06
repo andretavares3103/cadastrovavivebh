@@ -22,10 +22,17 @@ creds = Credentials.from_service_account_info(
 )
 import gspread
 gc = gspread.authorize(creds)
+
+
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 service_drive = build('drive', 'v3', credentials=creds)
 SHEET_OK = True
+
+
+  
+
+
 
 def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
     if SHEET_OK and folder_id and file is not None:
@@ -109,14 +116,16 @@ with st.form("cadastro_prof"):
     arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
     comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
 
+
+
     # --- Configuração da sua planilha de horários
-    HORARIOS_SHEET_ID = SHEET_ID  # Mesmo ID da planilha principal, se desejar usar outra, mude aqui
-    ABA_HORARIOS = "Página2"
+    HORARIOS_SHEET_ID = "1-5djeo_z3fluYEfxCzVngGmLbLa0tA2nT8b_Edn-tIM"
+    ABA_HORARIOS = "Página1"
     
     # --- Carrega os horários disponíveis
-    sh_horarios = gc.open_by_key(HORARIOS_SHEET_ID)
-    worksheet_horarios = sh_horarios.worksheet(ABA_HORARIOS)
-    df_horarios = pd.DataFrame(worksheet_horarios.get_all_records())
+    sh = gc.open_by_key(HORARIOS_SHEET_ID)
+    worksheet = sh.worksheet(ABA_HORARIOS)
+    df_horarios = pd.DataFrame(worksheet.get_all_records())
     
     # --- Filtra horários disponíveis
     disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
@@ -124,6 +133,7 @@ with st.form("cadastro_prof"):
         disponiveis["Data"] + " (" + disponiveis["Dia Semana"] + ") - " + disponiveis["Horario"]
     )
     
+    # --- Exibe opções para seleção
     st.title("Treinamento Presencial Obrigatório (Selecione um horário disponível)")
     
     if not disponiveis.empty:
@@ -133,10 +143,17 @@ with st.form("cadastro_prof"):
         )
         st.success(f"Horário selecionado: {horario_escolhido}")
     else:
-        horario_escolhido = ""
         st.warning("Nenhum horário disponível no momento.")
 
+
+    
     submitted = st.form_submit_button("Finalizar Cadastro")
+
+
+
+
+
+
 
 if submitted:
     obrigatorios = {
@@ -169,8 +186,6 @@ if submitted:
             st.error("Celular inválido! Deve conter DDD e número.")
         elif not validar_cep(cep):
             st.error("CEP inválido! Deve conter 8 dígitos.")
-        elif not horario_escolhido:
-            st.error("Selecione um horário disponível para treinamento!")
         else:
             # Salvar RG/CPF
             links_rg_cpf = []
@@ -188,18 +203,24 @@ if submitted:
                 )
                 links_comprovante.append(url if url else "Falha no upload")
 
-            # Extrai data, dia da semana e horário
-            m = re.match(r"(\d{2}/\d{2}/\d{4}) \((.*?)\) - ([\d:]+ às [\d:]+)", horario_escolhido)
-            if m:
-                data_selecionada = m.group(1)
-                dia_semana = m.group(2)
-                horario = m.group(3)
-            else:
-                data_selecionada = horario = dia_semana = ""
 
-            # Salvar dados na Google Sheets (na primeira aba da planilha)
+
+                import re
+                # Exemplo: "10/08/2024 (sábado) - 10:00 às 12:00"
+                m = re.match(r"(\d{2}/\d{2}/\d{4}) \((.*?)\) - ([\d:]+ às [\d:]+)", horario_escolhido)
+                if m:
+                    data_selecionada = m.group(1)
+                    dia_semana = m.group(2)
+                    horario = m.group(3)
+                else:
+                    data_selecionada = horario = dia_semana = ""
+
+
+          
+
+            # Salvar dados na Google Sheets
             sh = gc.open_by_key(SHEET_ID)
-            worksheet = sh.sheet1  # ou sh.worksheet("Página1") se precisar
+            worksheet = sh.sheet1
             dados = [
                 nome,
                 cpf_format,
@@ -217,7 +238,7 @@ if submitted:
                 "; ".join(links_comprovante),
                 data_selecionada,  # NOVO
                 horario,           # NOVO
-                dia_semana,        # NOVO
+                dia_semana,         # NOVO
                 datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             ]
             worksheet.append_row(dados)
@@ -232,3 +253,18 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
