@@ -233,7 +233,7 @@ if st.session_state["tela"] == "cadastro":
                     ]
                     worksheet.append_row(dados)
                     st.session_state["cadastro_finalizado"] = True
-                    st.experimental_rerun()
+                    st.rerun()
     else:
         st.success("Cadastro finalizado com sucesso! Entraremos em contato para validar o seu horário escolhido.")
         if st.button("Novo cadastro"):
@@ -289,3 +289,4 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.worksheet("Página1")
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
