@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 import pandas as pd
 import re
@@ -88,163 +86,206 @@ def validar_data_nascimento(data_str):
     except:
         return None
 
+# ================= TELA INICIAL ====================
+if "tela" not in st.session_state:
+    st.session_state["tela"] = "inicio"
+if "cadastro_finalizado" not in st.session_state:
+    st.session_state["cadastro_finalizado"] = False
+
 st.title("Recrutamento e treinamento de Profissional VAVIVÊ BH")
 
-with st.form("cadastro_prof"):
-    st.markdown("#### **Informações Pessoais**")
-    nome = st.text_input("*Nome")
-    cpf = st.text_input("*CPF sem pontos ou traços", max_chars=14, help="Apenas números")
-    rg = st.text_input("*RG")
-    celular = st.text_input("*Celular (Apenas números com DDD)", max_chars=15, help="Apenas números")
-    email = st.text_input("*E-mail")
-    data_nascimento = st.text_input("*Data de nascimento (Incluir barras)", placeholder="DD/MM/AAAA")
-    
-    st.markdown("#### **Endereço**")
-    cep = st.text_input("*CEP", max_chars=9, help="Apenas números")
-    rua = st.text_input("Rua")
-    numero = st.text_input("*Número")
-    bairro = st.text_input("Bairro")
-    cidade = st.text_input("Cidade")
-    estado = st.text_input("Estado")
+if st.session_state["tela"] == "inicio":
+    st.markdown("## O que você deseja fazer?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Novo Cadastro"):
+            st.session_state["tela"] = "cadastro"
+    with col2:
+        if st.button("Já tenho cadastro (Agendar horário)"):
+            st.session_state["tela"] = "agendamento"
+    st.stop()
 
-    st.markdown("#### **Documentos obrigatórios**")
-    arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
-    comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
+# ================== FLUXO NOVO CADASTRO ==================
+if st.session_state["tela"] == "cadastro":
+    if not st.session_state["cadastro_finalizado"]:
+        with st.form("cadastro_prof"):
+            st.markdown("#### **Informações Pessoais**")
+            nome = st.text_input("*Nome")
+            cpf = st.text_input("*CPF sem pontos ou traços", max_chars=14, help="Apenas números")
+            rg = st.text_input("*RG")
+            celular = st.text_input("*Celular (Apenas números com DDD)", max_chars=15, help="Apenas números")
+            email = st.text_input("*E-mail")
+            data_nascimento = st.text_input("*Data de nascimento (Incluir barras)", placeholder="DD/MM/AAAA")
+            
+            st.markdown("#### **Endereço**")
+            cep = st.text_input("*CEP", max_chars=9, help="Apenas números")
+            rua = st.text_input("Rua")
+            numero = st.text_input("*Número")
+            bairro = st.text_input("Bairro")
+            cidade = st.text_input("Cidade")
+            estado = st.text_input("Estado")
 
-    # --- Configuração da sua planilha de horários
-    HORARIOS_SHEET_ID = SHEET_ID  # Mesmo ID da planilha principal, se desejar usar outra, mude aqui
+            st.markdown("#### **Documentos obrigatórios**")
+            arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
+            comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
+
+            # --- Configuração da sua planilha de horários
+            HORARIOS_SHEET_ID = SHEET_ID
+            ABA_HORARIOS = "Página2"
+            sh_horarios = gc.open_by_key(HORARIOS_SHEET_ID)
+            worksheet_horarios = sh_horarios.worksheet(ABA_HORARIOS)
+            df_horarios = pd.DataFrame(worksheet_horarios.get_all_records())
+            disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
+            disponiveis["Opção"] = (
+                disponiveis["Data"] + " (" + disponiveis["Dia Semana"] + ") - " + disponiveis["Horario"]
+            )
+            st.markdown("### Treinamento Presencial Obrigatório (Selecione um horário disponível)")
+            if not disponiveis.empty:
+                horario_escolhido = st.selectbox(
+                    "Horários disponíveis:",
+                    disponiveis["Opção"].tolist()
+                )
+            else:
+                horario_escolhido = ""
+                st.warning("Nenhum horário disponível no momento.")
+
+            submitted = st.form_submit_button("Finalizar Cadastro")
+
+        if submitted:
+            obrigatorios = {
+                "Nome": nome,
+                "CPF": cpf,
+                "RG": rg,
+                "Celular": celular,
+                "E-mail": email,
+                "Data de nascimento": data_nascimento,
+                "CEP": cep
+            }
+            faltando = [campo for campo, valor in obrigatorios.items() if not valor]
+            if faltando:
+                st.error("Preencha todos os campos obrigatórios: " + ", ".join(faltando))
+            else:
+                cpf_format = formatar_cpf(cpf)
+                celular_format = formatar_celular(celular)
+                data_nasc_dt = validar_data_nascimento(data_nascimento)
+                cep_format = formatar_cep(cep)
+
+                if not data_nasc_dt:
+                    st.error("Data de nascimento inválida! Use o formato DD/MM/AAAA.")
+                elif not arquivos_rg_cpf:
+                    st.error("É obrigatório anexar pelo menos 1 arquivo de RG/CPF (frente e verso).")
+                elif not comprovante_residencia:
+                    st.error("É obrigatório anexar pelo menos 1 arquivo de comprovante de residência.")
+                elif not validar_cpf(cpf):
+                    st.error("CPF inválido! Deve conter 11 dígitos.")
+                elif not validar_celular(celular):
+                    st.error("Celular inválido! Deve conter DDD e número.")
+                elif not validar_cep(cep):
+                    st.error("CEP inválido! Deve conter 8 dígitos.")
+                elif not horario_escolhido:
+                    st.error("Selecione um horário disponível para treinamento!")
+                else:
+                    # Salvar RG/CPF
+                    links_rg_cpf = []
+                    for arquivo in arquivos_rg_cpf:
+                        url = salvar_arquivo_drive(
+                            arquivo, FOLDER_ID, cpf, nome, "RG_CPF"
+                        )
+                        links_rg_cpf.append(url if url else "Falha no upload")
+                    # Salvar Comprovante de Residência
+                    links_comprovante = []
+                    for arquivo in comprovante_residencia:
+                        url = salvar_arquivo_drive(
+                            arquivo, FOLDER_ID, cpf, nome, "Comprovante"
+                        )
+                        links_comprovante.append(url if url else "Falha no upload")
+                    # Debug: veja qual valor está chegando do selectbox
+                    m = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4}) \((.*?)\) - (.+)", horario_escolhido)
+                    if m:
+                        data_selecionada = m.group(1)
+                        dia_semana = m.group(2)
+                        horario = m.group(3)
+                    else:
+                        data_selecionada = horario = dia_semana = ""
+                        st.warning("Não foi possível extrair data, dia e horário do horário selecionado!")
+                    # Salvar dados na Google Sheets (na primeira aba da planilha)
+                    sh = gc.open_by_key(SHEET_ID)
+                    worksheet = sh.worksheet("Página1")
+                    dados = [
+                        nome,
+                        cpf_format,
+                        rg,
+                        celular_format,
+                        email,
+                        data_nasc_dt.strftime("%d/%m/%Y"),
+                        cep_format,
+                        rua,
+                        numero,
+                        bairro,
+                        cidade,
+                        estado,
+                        "; ".join(links_rg_cpf),
+                        "; ".join(links_comprovante),
+                        data_selecionada,
+                        horario,
+                        dia_semana,
+                        datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                    ]
+                    worksheet.append_row(dados)
+                    st.session_state["cadastro_finalizado"] = True
+                    st.experimental_rerun()
+    else:
+        st.success("Cadastro finalizado com sucesso! Entraremos em contato para validar o seu horário escolhido.")
+        if st.button("Novo cadastro"):
+            st.session_state["cadastro_finalizado"] = False
+            st.session_state["tela"] = "inicio"
+        if st.button("Agendar novo horário"):
+            st.session_state["cadastro_finalizado"] = False
+            st.session_state["tela"] = "agendamento"
+
+# =========== FLUXO APENAS AGENDAMENTO DE HORÁRIO ==============
+if st.session_state["tela"] == "agendamento":
+    st.header("Agendamento de Horário para Profissional já cadastrada")
+    # --- Planilha de horários
+    HORARIOS_SHEET_ID = SHEET_ID
     ABA_HORARIOS = "Página2"
-    
-    # --- Carrega os horários disponíveis
     sh_horarios = gc.open_by_key(HORARIOS_SHEET_ID)
     worksheet_horarios = sh_horarios.worksheet(ABA_HORARIOS)
     df_horarios = pd.DataFrame(worksheet_horarios.get_all_records())
-    
-    # --- Filtra horários disponíveis
     disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
     disponiveis["Opção"] = (
         disponiveis["Data"] + " (" + disponiveis["Dia Semana"] + ") - " + disponiveis["Horario"]
     )
-    
-    st.title("Treinamento Presencial Obrigatório (Selecione um horário disponível)")
-    
     if not disponiveis.empty:
         horario_escolhido = st.selectbox(
-            "Horários disponíveis:",
+            "Horários disponíveis para selecionar:",
             disponiveis["Opção"].tolist()
         )
-        st.success(f"Horário selecionado: {horario_escolhido}")
-    else:
-        horario_escolhido = ""
-        st.warning("Nenhum horário disponível no momento.")
-
-    submitted = st.form_submit_button("Finalizar Cadastro")
-
-if submitted:
-    obrigatorios = {
-        "Nome": nome,
-        "CPF": cpf,
-        "RG": rg,
-        "Celular": celular,
-        "E-mail": email,
-        "Data de nascimento": data_nascimento,
-        "CEP": cep
-    }
-    faltando = [campo for campo, valor in obrigatorios.items() if not valor]
-    if faltando:
-        st.error("Preencha todos os campos obrigatórios: " + ", ".join(faltando))
-    else:
-        cpf_format = formatar_cpf(cpf)
-        celular_format = formatar_celular(celular)
-        data_nasc_dt = validar_data_nascimento(data_nascimento)
-        cep_format = formatar_cep(cep)
-
-        if not data_nasc_dt:
-            st.error("Data de nascimento inválida! Use o formato DD/MM/AAAA.")
-        elif not arquivos_rg_cpf:
-            st.error("É obrigatório anexar pelo menos 1 arquivo de RG/CPF (frente e verso).")
-        elif not comprovante_residencia:
-            st.error("É obrigatório anexar pelo menos 1 arquivo de comprovante de residência.")
-        elif not validar_cpf(cpf):
-            st.error("CPF inválido! Deve conter 11 dígitos.")
-        elif not validar_celular(celular):
-            st.error("Celular inválido! Deve conter DDD e número.")
-        elif not validar_cep(cep):
-            st.error("CEP inválido! Deve conter 8 dígitos.")
-        elif not horario_escolhido:
-            st.error("Selecione um horário disponível para treinamento!")
-        else:
-            # Salvar RG/CPF
-            links_rg_cpf = []
-            for arquivo in arquivos_rg_cpf:
-                url = salvar_arquivo_drive(
-                    arquivo, FOLDER_ID, cpf, nome, "RG_CPF"
-                )
-                links_rg_cpf.append(url if url else "Falha no upload")
-
-            # Salvar Comprovante de Residência
-            links_comprovante = []
-            for arquivo in comprovante_residencia:
-                url = salvar_arquivo_drive(
-                    arquivo, FOLDER_ID, cpf, nome, "Comprovante"
-                )
-                links_comprovante.append(url if url else "Falha no upload")
-
-            # Debug: veja qual valor está chegando do selectbox
-            st.write("DEBUG: Horário escolhido:", horario_escolhido)
+        nome = st.text_input("Digite seu nome completo para vincular ao agendamento:")
+        confirmar = st.button("Confirmar horário")
+        if confirmar and nome.strip() != "":
             m = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4}) \((.*?)\) - (.+)", horario_escolhido)
             if m:
                 data_selecionada = m.group(1)
                 dia_semana = m.group(2)
                 horario = m.group(3)
+                # Opcional: Salvar esse novo agendamento numa outra aba, planilha ou apenas exibir confirmação
+                st.success(
+                    f"Agendamento realizado!\n\nNome: {nome}\nData: {data_selecionada}\nHorário: {horario} ({dia_semana})"
+                )
+                st.button("Voltar ao início", on_click=lambda: st.session_state.update({"tela": "inicio"}))
             else:
-                data_selecionada = horario = dia_semana = ""
-                st.warning("Não foi possível extrair data, dia e horário do horário selecionado!")
-
-
-
-            # Salvar dados na Google Sheets (na primeira aba da planilha)
-            sh = gc.open_by_key(SHEET_ID)
-            worksheet = sh.worksheet("Página1")  # <--- aqui salva a referência correta!
-            dados = [
-                nome,
-                cpf_format,
-                rg,
-                celular_format,
-                email,
-                data_nasc_dt.strftime("%d/%m/%Y"),
-                cep_format,
-                rua,
-                numero,
-                bairro,
-                cidade,
-                estado,
-                "; ".join(links_rg_cpf),
-                "; ".join(links_comprovante),
-                data_selecionada,  # NOVO
-                horario,           # NOVO
-                dia_semana,        # NOVO
-                datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-            ]
-            worksheet.append_row(dados)
-            st.success("Cadastro realizado com sucesso!")
-       #     st.write("RG/CPF enviados:", links_rg_cpf)
-        #    st.write("Comprovante de residência enviado:", links_comprovante)
+                st.error("Formato do horário inválido, tente novamente.")
+        elif confirmar:
+            st.warning("Por favor, digite seu nome completo para confirmar o agendamento.")
+    else:
+        st.warning("Nenhum horário disponível para agendamento no momento.")
+        st.button("Voltar ao início", on_click=lambda: st.session_state.update({"tela": "inicio"}))
 
 # =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
-#st.markdown("---")
-#if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
-#    sh = gc.open_by_key(SHEET_ID)
-#    worksheet = sh.worksheet("Página1")
-#    df = pd.DataFrame(worksheet.get_all_records())
-#    st.dataframe(df, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
+st.markdown("---")
+if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
+    sh = gc.open_by_key(SHEET_ID)
+    worksheet = sh.worksheet("Página1")
+    df = pd.DataFrame(worksheet.get_all_records())
+    st.dataframe(df, use_container_width=True)
