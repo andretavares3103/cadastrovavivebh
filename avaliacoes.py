@@ -137,7 +137,7 @@ with st.form("cadastro_prof"):
         horario_escolhido = ""
         st.warning("Nenhum horário disponível no momento.")
 
-submitted = st.form_submit_button("Finalizar Cadastro")
+    submitted = st.form_submit_button("Finalizar Cadastro")
 
 if submitted:
     obrigatorios = {
@@ -233,4 +233,5 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
