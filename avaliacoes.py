@@ -225,6 +225,9 @@ if submitted:
                 dia_semana,        # NOVO
                 datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             ]
+
+            st.write("Debug dos dados enviados para a planilha:", dados)
+
             worksheet.append_row(dados)
             st.success("Cadastro realizado com sucesso!")
             st.write("RG/CPF enviados:", links_rg_cpf)
@@ -237,6 +240,7 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.worksheet("Página1")
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
 
