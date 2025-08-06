@@ -200,7 +200,7 @@ if submitted:
 
             # Salvar dados na Google Sheets (na primeira aba da planilha)
             sh = gc.open_by_key(SHEET_ID)
-            worksheet = sh.sheet1  # ou sh.worksheet("Página1") se precisar
+            sh.worksheet("Página1")
             dados = [
                 nome,
                 cpf_format,
@@ -233,5 +233,6 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.sheet1
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
 
 
