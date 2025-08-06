@@ -232,12 +232,13 @@ if submitted:
         #    st.write("Comprovante de residência enviado:", links_comprovante)
 
 # =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
-st.markdown("---")
-if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
-    sh = gc.open_by_key(SHEET_ID)
-    worksheet = sh.worksheet("Página1")
-    df = pd.DataFrame(worksheet.get_all_records())
-    st.dataframe(df, use_container_width=True)
+#st.markdown("---")
+#if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
+#    sh = gc.open_by_key(SHEET_ID)
+#    worksheet = sh.worksheet("Página1")
+#    df = pd.DataFrame(worksheet.get_all_records())
+#    st.dataframe(df, use_container_width=True)
+
 
 
 
