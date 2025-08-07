@@ -93,14 +93,11 @@ if "cadastro_finalizado" not in st.session_state:
     st.session_state["cadastro_finalizado"] = False
 
 #st.title("Recrutamento e Treinamento de Profissional VAVIVÊ BH")
-    col1, col2 = st.columns([1, 8])
-    with col1:
-        st.image("https://i.imgur.com/gIhC0fC.png", width=48)
-    with col2:
-        st.markdown("""
-            <span style='font-size:1.7em;font-weight:700;color:#18d96b;letter-spacing:1px;'>
-                BELO HORIZONTE || PORTAL DE ATENDIMENTOS
-            </span>
+    st.markdown("""
+    <div style='display:flex;align-items:center;gap:16px'>
+        <img src='https://i.imgur.com/gIhC0fC.png' height='48'>
+        <span style='font-size:3.0em;font-weight:700;color:#18d96b;letter-spacing:1px;'>BELO HORIZONTE || Recrutamento e Treinamento de Profissional</span>
+    </div>
 """, unsafe_allow_html=True)
 
 if st.session_state["tela"] == "inicio":
@@ -325,9 +322,6 @@ if st.session_state["tela"] == "agendamento":
 #    worksheet = sh.worksheet("Página1")
 #    df = pd.DataFrame(worksheet.get_all_records())
 #    st.dataframe(df, use_container_width=True)
-
-
-
 
 
 
