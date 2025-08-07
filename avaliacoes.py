@@ -264,7 +264,8 @@ if st.session_state["tela"] == "agendamento":
     sh = gc.open_by_key(SHEET_ID)
     worksheet = sh.worksheet("Página1")
     df_cadastros = pd.DataFrame(worksheet.get_all_records())
-    df_cadastros.columns = [col.strip() for col in df_cadastros.columns]
+    df_cadastros.columns = [col.strip().upper() for col in df_cadastros.columns]  # TUDO MAIÚSCULO!
+
 
     cpf_pesquisa = st.text_input("Digite seu CPF (somente números, 11 dígitos):")
     cpf_pesquisa = re.sub(r'\D', '', cpf_pesquisa)
@@ -338,3 +339,4 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.worksheet("Página1")
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
+
