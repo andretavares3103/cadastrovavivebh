@@ -92,7 +92,7 @@ if "tela" not in st.session_state:
 if "cadastro_finalizado" not in st.session_state:
     st.session_state["cadastro_finalizado"] = False
 
-st.title("Recrutamento e treinamento de Profissional VAVIVÊ BH")
+st.title("Recrutamento e Treinamento de Profissional VAVIVÊ BH")
 
 if st.session_state["tela"] == "inicio":
     st.markdown("## O que você deseja fazer?")
@@ -313,4 +313,5 @@ if st.session_state["tela"] == "agendamento":
 #    worksheet = sh.worksheet("Página1")
 #    df = pd.DataFrame(worksheet.get_all_records())
 #    st.dataframe(df, use_container_width=True)
+
 
