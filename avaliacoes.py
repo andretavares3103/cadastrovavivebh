@@ -107,6 +107,16 @@ if st.session_state["tela"] == "inicio":
 
 # ================== FLUXO NOVO CADASTRO ==================
 if st.session_state["tela"] == "cadastro":
+       # Adiciona logo/banner no topo do formulário
+    st.markdown("""
+        <div style='display:flex;align-items:center;gap:16px'>
+            <img src='https://i.imgur.com/gIhC0fC.png' height='48'>
+            <span style='font-size:1.7em;font-weight:700;color:#18d96b;letter-spacing:1px;'>BELO HORIZONTE || PORTAL DE ATENDIMENTOS</span>
+        </div>
+        <p style='color:#666;font-size:1.08em;margin:8px 0 18px 0'>
+            Consulte abaixo os atendimentos disponíveis!
+        </p>
+    """, unsafe_allow_html=True)
     if not st.session_state["cadastro_finalizado"]:
         with st.form("cadastro_prof"):
             st.markdown("#### **Informações Pessoais**")
@@ -313,4 +323,5 @@ if st.session_state["tela"] == "agendamento":
 #    worksheet = sh.worksheet("Página1")
 #    df = pd.DataFrame(worksheet.get_all_records())
 #    st.dataframe(df, use_container_width=True)
+
 
