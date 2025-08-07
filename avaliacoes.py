@@ -93,11 +93,7 @@ if "cadastro_finalizado" not in st.session_state:
     st.session_state["cadastro_finalizado"] = False
 
 st.title("Recrutamento e Treinamento de Profissional VAVIVÊ BH")
-
-
-if st.session_state["tela"] == "inicio":
-           # Adiciona logo/banner no topo do formulário
-    st.markdown("""
+        st.markdown("""
         <div style='display:flex;align-items:center;gap:16px'>
             <img src='https://i.imgur.com/gIhC0fC.png' height='48'>
             <span style='font-size:1.7em;font-weight:700;color:#18d96b;letter-spacing:1px;'>BELO HORIZONTE || PORTAL DE ATENDIMENTOS</span>
@@ -106,6 +102,10 @@ if st.session_state["tela"] == "inicio":
             Consulte abaixo os atendimentos disponíveis!
         </p>
     """, unsafe_allow_html=True)
+
+if st.session_state["tela"] == "inicio":
+           # Adiciona logo/banner no topo do formulário
+
     st.markdown("## O que você deseja fazer?")
     col1, col2 = st.columns(2)
     with col1:
@@ -325,6 +325,7 @@ if st.session_state["tela"] == "agendamento":
 #    worksheet = sh.worksheet("Página1")
 #    df = pd.DataFrame(worksheet.get_all_records())
 #    st.dataframe(df, use_container_width=True)
+
 
 
 
