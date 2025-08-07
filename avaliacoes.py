@@ -307,9 +307,10 @@ if st.session_state["tela"] == "agendamento":
         st.warning("Digite um CPF válido (11 dígitos, apenas números).")
 
 # =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
-st.markdown("---")
-if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
-    sh = gc.open_by_key(SHEET_ID)
-    worksheet = sh.worksheet("Página1")
-    df = pd.DataFrame(worksheet.get_all_records())
-    st.dataframe(df, use_container_width=True)
+#st.markdown("---")
+#if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
+#    sh = gc.open_by_key(SHEET_ID)
+#    worksheet = sh.worksheet("Página1")
+#    df = pd.DataFrame(worksheet.get_all_records())
+#    st.dataframe(df, use_container_width=True)
+
