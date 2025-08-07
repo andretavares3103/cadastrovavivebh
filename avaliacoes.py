@@ -37,8 +37,8 @@ def salvar_arquivo_drive(file, folder_id, cpf, nome, doc_type):
             }
             media = MediaIoBaseUpload(BytesIO(file.read()), mimetype=file.type)
             uploaded_file = service_drive.files().create(
-                body=file_metadata, 
-                media_body=media, 
+                body=file_metadata,
+                media_body=media,
                 fields='id,webViewLink',
                 supportsAllDrives=True
             ).execute()
@@ -54,6 +54,16 @@ def formatar_cpf(valor):
         return "%s.%s.%s-%s" % (valor[:3], valor[3:6], valor[6:9], valor[9:])
     return valor
 
+def validar_cpf(cpf):
+    cpf = re.sub(r'\D', '', cpf)
+    return len(cpf) == 11
+
+def validar_data_nascimento(data_str):
+    try:
+        return datetime.strptime(data_str, "%d/%m/%Y")
+    except:
+        return None
+
 def formatar_celular(valor):
     valor = re.sub(r'\D', '', valor)
     if len(valor) == 11:
@@ -68,10 +78,6 @@ def formatar_cep(valor):
         return "%s-%s" % (valor[:5], valor[5:])
     return valor
 
-def validar_cpf(cpf):
-    cpf = re.sub(r'\D', '', cpf)
-    return len(cpf) == 11
-
 def validar_celular(cel):
     cel = re.sub(r'\D', '', cel)
     return len(cel) in [10, 11]
@@ -79,12 +85,6 @@ def validar_celular(cel):
 def validar_cep(cep):
     cep = re.sub(r'\D', '', cep)
     return len(cep) == 8
-
-def validar_data_nascimento(data_str):
-    try:
-        return datetime.strptime(data_str, "%d/%m/%Y")
-    except:
-        return None
 
 # ================= TELA INICIAL ====================
 if "tela" not in st.session_state:
@@ -243,44 +243,70 @@ if st.session_state["tela"] == "cadastro":
             st.session_state["cadastro_finalizado"] = False
             st.session_state["tela"] = "agendamento"
 
-# =========== FLUXO APENAS AGENDAMENTO DE HORÁRIO ==============
+# =========== FLUXO APENAS AGENDAMENTO DE HORÁRIO (VALIDA PELO CPF) ==============
 if st.session_state["tela"] == "agendamento":
     st.header("Agendamento de Horário para Profissional já cadastrada")
-    # --- Planilha de horários
-    HORARIOS_SHEET_ID = SHEET_ID
-    ABA_HORARIOS = "Página2"
-    sh_horarios = gc.open_by_key(HORARIOS_SHEET_ID)
-    worksheet_horarios = sh_horarios.worksheet(ABA_HORARIOS)
-    df_horarios = pd.DataFrame(worksheet_horarios.get_all_records())
-    disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
-    disponiveis["Opção"] = (
-        disponiveis["Data"] + " (" + disponiveis["Dia Semana"] + ") - " + disponiveis["Horario"]
-    )
-    if not disponiveis.empty:
-        horario_escolhido = st.selectbox(
-            "Horários disponíveis para selecionar:",
-            disponiveis["Opção"].tolist()
-        )
-        nome = st.text_input("Digite seu nome completo para vincular ao agendamento:")
-        confirmar = st.button("Confirmar horário")
-        if confirmar and nome.strip() != "":
-            m = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4}) \((.*?)\) - (.+)", horario_escolhido)
-            if m:
-                data_selecionada = m.group(1)
-                dia_semana = m.group(2)
-                horario = m.group(3)
-                # Opcional: Salvar esse novo agendamento numa outra aba, planilha ou apenas exibir confirmação
+    cpf_busca = st.text_input("Digite seu CPF (apenas números, 11 dígitos):")
+    if cpf_busca and len(cpf_busca) == 11 and cpf_busca.isdigit():
+        sh = gc.open_by_key(SHEET_ID)
+        worksheet = sh.worksheet("Página1")
+        registros = worksheet.get_all_records()
+        df_registros = pd.DataFrame(registros)
+        df_registros["CPF_num"] = df_registros["CPF"].str.replace(r'\D', '', regex=True)
+        idx = df_registros[df_registros["CPF_num"] == cpf_busca].index
+        if len(idx) == 0:
+            st.error("Cadastro não localizado para esse CPF.")
+        else:
+            registro = df_registros.loc[idx[0]]  # sempre pega o primeiro, se houver duplicados
+            # Verifica se já tem horário salvo
+            if (str(registro["Data"]).strip() != "") and (str(registro["Horario"]).strip() != ""):
                 st.success(
-                    f"Agendamento realizado!\n\nNome: {nome}\nData: {data_selecionada}\nHorário: {horario} ({dia_semana})"
+                    f"Você já escolheu o horário: {registro['Data']} ({registro['Dia semana']}) – {registro['Horario']}"
+                )
+                st.info(
+                    "Caso precise trocar o horário, envie uma mensagem para nossa equipe no WhatsApp informando seu nome completo e CPF."
                 )
                 st.button("Voltar ao início", on_click=lambda: st.session_state.update({"tela": "inicio"}))
             else:
-                st.error("Formato do horário inválido, tente novamente.")
-        elif confirmar:
-            st.warning("Por favor, digite seu nome completo para confirmar o agendamento.")
-    else:
-        st.warning("Nenhum horário disponível para agendamento no momento.")
-        st.button("Voltar ao início", on_click=lambda: st.session_state.update({"tela": "inicio"}))
+                # Seleção de horários caso não tenha horário salvo
+                HORARIOS_SHEET_ID = SHEET_ID
+                ABA_HORARIOS = "Página2"
+                sh_horarios = gc.open_by_key(HORARIOS_SHEET_ID)
+                worksheet_horarios = sh_horarios.worksheet(ABA_HORARIOS)
+                df_horarios = pd.DataFrame(worksheet_horarios.get_all_records())
+                disponiveis = df_horarios[df_horarios["Disponivel"].str.upper() == "SIM"]
+                disponiveis["Opção"] = (
+                    disponiveis["Data"] + " (" + disponiveis["Dia Semana"] + ") - " + disponiveis["Horario"]
+                )
+                st.markdown("### Selecione um horário disponível para treinamento:")
+                if not disponiveis.empty:
+                    horario_escolhido = st.selectbox(
+                        "Horários disponíveis:",
+                        disponiveis["Opção"].tolist(),
+                        key="agendamento_selectbox"
+                    )
+                    confirmar = st.button("Confirmar horário")
+                    if confirmar:
+                        m = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4}) \((.*?)\) - (.+)", horario_escolhido)
+                        if m:
+                            data_selecionada = m.group(1)
+                            dia_semana = m.group(2)
+                            horario = m.group(3)
+                        else:
+                            data_selecionada = horario = dia_semana = ""
+                        # Atualiza a linha na planilha!
+                        worksheet.update_cell(idx[0]+2, df_registros.columns.get_loc("Data")+1, data_selecionada)
+                        worksheet.update_cell(idx[0]+2, df_registros.columns.get_loc("Horario")+1, horario)
+                        worksheet.update_cell(idx[0]+2, df_registros.columns.get_loc("Dia semana")+1, dia_semana)
+                        st.success(
+                            f"Horário {horario_escolhido} registrado com sucesso para o CPF informado!"
+                        )
+                        st.button("Voltar ao início", on_click=lambda: st.session_state.update({"tela": "inicio"}))
+                else:
+                    st.warning("Nenhum horário disponível para agendamento no momento.")
+                    st.button("Voltar ao início", on_click=lambda: st.session_state.update({"tela": "inicio"}))
+    elif cpf_busca:
+        st.warning("Digite o CPF apenas com números (11 dígitos).")
 
 # =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
 st.markdown("---")
@@ -289,4 +315,3 @@ if SHEET_OK and st.checkbox("Mostrar todos cadastros"):
     worksheet = sh.worksheet("Página1")
     df = pd.DataFrame(worksheet.get_all_records())
     st.dataframe(df, use_container_width=True)
-
