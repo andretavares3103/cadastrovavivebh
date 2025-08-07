@@ -95,8 +95,8 @@ if "cadastro_finalizado" not in st.session_state:
 #st.title("Recrutamento e Treinamento de Profissional VAVIVÊ BH")
     st.markdown("""
     <div style='display:flex;align-items:center;gap:16px'>
-        
-        <span style='font-size:2.4em;font-weight:700;color:#18d96b;letter-spacing:1px;'>BELO HORIZONTE || Recrutamento e Treinamento de Profissional</span>
+        <img src='https://i.imgur.com/gIhC0fC.png' height='48'>
+        <span style='font-size:2.2em;font-weight:700;color:#18d96b;letter-spacing:1px;'>BELO HORIZONTE || Recrutamento e Treinamento de Profissional</span>
     </div>
 """, unsafe_allow_html=True)
 
