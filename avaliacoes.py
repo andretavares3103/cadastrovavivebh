@@ -96,7 +96,7 @@ if "cadastro_finalizado" not in st.session_state:
     st.markdown("""
     <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
         <img src='https://i.imgur.com/gIhC0fC.png' height='60' style='margin-bottom: 12px;'>
-        <span style='font-size:2.2em;font-weight:700;color:#18d96b;letter-spacing:1px; text-align: center;'>
+        <span style='font-size:2.5em;font-weight:700;color:#18d96b;letter-spacing:1px; text-align: center;'>
             BELO HORIZONTE || Recrutamento e Treinamento de Profissional
         </span>
     </div>
@@ -324,6 +324,7 @@ if st.session_state["tela"] == "agendamento":
 #    worksheet = sh.worksheet("Página1")
 #    df = pd.DataFrame(worksheet.get_all_records())
 #    st.dataframe(df, use_container_width=True)
+
 
 
 
