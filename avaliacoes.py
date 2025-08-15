@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from io import BytesIO
 import json
+from gspread.utils import rowcol_to_a1
 
 # ========== CONFIGURAÇÕES FIXAS ==========
 SHEET_ID = "10PiH_xBokxZUH-hVvLsrUmNNQnpsfkdOwLhjNkAibnA"
@@ -91,6 +92,15 @@ if "tela" not in st.session_state:
     st.session_state["tela"] = "inicio"
 if "cadastro_finalizado" not in st.session_state:
     st.session_state["cadastro_finalizado"] = False
+if "agendamento_busca_ok" not in st.session_state:
+    st.session_state.agendamento_busca_ok = False
+if "agendamento_row" not in st.session_state:
+    st.session_state.agendamento_row = None
+if "agendamento_cols" not in st.session_state:
+    st.session_state.agendamento_cols = []
+if "agendamento_registro" not in st.session_state:
+    st.session_state.agendamento_registro = None
+
 
 #st.title("Recrutamento e Treinamento de Profissional VAVIVÊ BH")
     st.markdown("""
@@ -276,122 +286,116 @@ if "agendamento_registro" not in st.session_state:
 if st.session_state["tela"] == "agendamento":
     st.header("Agendamento de Horário para Profissional já cadastrada")
 
-    cpf_agendamento = st.text_input("Digite seu CPF (apenas números):", max_chars=11, key="cpf_agendamento")
-    buscar = st.button("Buscar cadastro", key="btn_buscar_agendamento")
+    # FORM 1: buscar CPF
+    with st.form("form_busca_cpf"):
+        cpf_agendamento = st.text_input("Digite seu CPF (apenas números):", max_chars=11, key="cpf_agendamento")
+        submit_busca = st.form_submit_button("Buscar cadastro")
 
-    # 1) Buscar e persistir o resultado no session_state
-    if buscar:
+    if submit_busca:
         cpf_pesquisa = re.sub(r'\D', '', cpf_agendamento or "")
         if len(cpf_pesquisa) != 11:
             st.warning("Digite um CPF válido (11 dígitos, apenas números).")
         else:
             sh = gc.open_by_key(SHEET_ID)
             ws_p1 = sh.worksheet("Página1")
-            df_cadastros = pd.DataFrame(ws_p1.get_all_records())
-            st.session_state.agendamento_cols = list(df_cadastros.columns)
+            df_cad = pd.DataFrame(ws_p1.get_all_records())
+            st.session_state.agendamento_cols = list(df_cad.columns)
 
-            if "CPF" not in df_cadastros.columns:
-                st.error("A coluna 'CPF' não existe na planilha Página1. Verifique o cabeçalho.")
+            if "CPF" not in df_cad.columns:
+                st.error("A coluna 'CPF' não existe na planilha Página1.")
             else:
-                registros = df_cadastros[
-                    df_cadastros["CPF"].astype(str).str.replace(r'\D', '', regex=True) == cpf_pesquisa
-                ]
-                if registros.empty:
+                mask = df_cad["CPF"].astype(str).str.replace(r'\D', '', regex=True) == cpf_pesquisa
+                if not mask.any():
                     st.session_state.agendamento_busca_ok = False
-                    st.error("Cadastro não encontrado para o CPF informado. Se for seu primeiro cadastro, volte e selecione 'Novo Cadastro'.")
+                    st.session_state.agendamento_row = None
+                    st.session_state.agendamento_registro = None
+                    st.error("Cadastro não encontrado. Se é seu primeiro cadastro, volte e selecione 'Novo Cadastro'.")
                 else:
-                    idx_df = registros.index[0]
-                    # guarda linha 1-based da planilha (somando 2 pelo cabeçalho)
-                    st.session_state.agendamento_row = int(idx_df) + 2
-                    st.session_state.agendamento_registro = registros.iloc[0]
+                    idx = df_cad.index[mask][0]
+                    st.session_state.agendamento_row = int(idx) + 2   # linha real (com cabeçalho)
+                    st.session_state.agendamento_registro = df_cad.loc[idx]
                     st.session_state.agendamento_busca_ok = True
 
-    # 2) Se a busca está ok, mostra status/agendamento
     if st.session_state.agendamento_busca_ok:
         sh = gc.open_by_key(SHEET_ID)
         ws_p1 = sh.worksheet("Página1")
 
-        linha = st.session_state.agendamento_registro
+        registro = st.session_state.agendamento_registro
         cols = st.session_state.agendamento_cols
         row_number = st.session_state.agendamento_row
 
-        ja_tem_data = ("Data" in cols and pd.notna(linha.get("Data")) and str(linha.get("Data")).strip())
-        ja_tem_horario = ("Horario" in cols and pd.notna(linha.get("Horario")) and str(linha.get("Horario")).strip())
+        data_exist = str(registro.get("Data") or "").strip()
+        hora_exist = str(registro.get("Horario") or "").strip()
+        dia_exist  = str(registro.get("Dia semana") or "").strip()
 
-        if ja_tem_data and ja_tem_horario:
+        if data_exist and hora_exist:
             st.success(
                 f"Você já possui um agendamento:\n\n"
-                f"Data: {linha.get('Data')} ({linha.get('Dia semana','')})\n"
-                f"Horário: {linha.get('Horario')}\n\n"
+                f"Data: {data_exist} ({dia_exist})\n"
+                f"Horário: {hora_exist}\n\n"
                 f"Se precisar trocar, entre em contato conosco via WhatsApp."
             )
         else:
-            # --- Carrega horários disponíveis
-            HORARIOS_SHEET_ID = SHEET_ID
-            ABA_HORARIOS = "Página2"
-            ws_h = gc.open_by_key(HORARIOS_SHEET_ID).worksheet(ABA_HORARIOS)
+            ws_h = sh.worksheet("Página2")
             df_h = pd.DataFrame(ws_h.get_all_records())
 
-            # valida cabeçalho
             faltando = {"Data", "Dia Semana", "Horario", "Disponivel"} - set(df_h.columns)
             if faltando:
-                st.error(f"A aba '{ABA_HORARIOS}' precisa ter as colunas: Data, Dia Semana, Horario, Disponivel. Falta(m): {', '.join(faltando)}")
+                st.error(f"A aba 'Página2' precisa ter as colunas: Data, Dia Semana, Horario, Disponivel. Falta(m): {', '.join(faltando)}")
             else:
-                disponiveis = df_h[df_h["Disponivel"].astype(str).str.upper() == "SIM"].copy()
-                disponiveis["Opção"] = (
-                    disponiveis["Data"] + " (" + disponiveis["Dia Semana"] + ") - " + disponiveis["Horario"]
-                )
+                dispo = df_h[df_h["Disponivel"].astype(str).str.upper() == "SIM"].copy()
+                dispo["Opção"] = dispo["Data"] + " (" + dispo["Dia Semana"] + ") - " + dispo["Horario"]
 
-                if disponiveis.empty:
+                if dispo.empty:
                     st.warning("Nenhum horário disponível para agendamento no momento.")
                 else:
-                    # 3) Form para confirmar (seleção + confirmação chegam juntas)
-                    with st.form("form_agendamento_confirm"):
-                        horario_escolhido = st.selectbox(
+                    with st.form("form_confirma_horario"):
+                        horario_opcao = st.selectbox(
                             "Horários disponíveis para selecionar:",
-                            disponiveis["Opção"].tolist(),
+                            dispo["Opção"].tolist(),
                             key="agendamento_opcao"
                         )
                         confirmar = st.form_submit_button("Confirmar horário")
 
                     if confirmar:
-                        m = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4}) \((.*?)\) - (.+)", horario_escolhido or "")
+                        m = re.match(r"(\d{1,2}/\d{1,2}/\d{2,4}) \((.*?)\) - (.+)", horario_opcao or "")
                         if not m:
                             st.error("Formato do horário inválido, tente novamente.")
                         else:
-                            data_sel = m.group(1)
-                            dia_sem = m.group(2)
-                            hora = m.group(3)
+                            data_sel, dia_sem, hora = m.groups()
 
-                            # localiza as colunas na Página1
-                            try:
-                                col_data = cols.index("Data") + 1
-                                col_hora = cols.index("Horario") + 1
-                                col_dias = cols.index("Dia semana") + 1
-                            except ValueError:
+                            # pega os índices de colunas na Página1
+                            def _col_index(cols, name):
+                                return cols.index(name) + 1 if name in cols else None
+
+                            c_data = _col_index(cols, "Data")
+                            c_hora = _col_index(cols, "Horario")
+                            c_dia  = _col_index(cols, "Dia semana")
+                            if None in [c_data, c_hora, c_dia]:
                                 st.error("As colunas 'Data', 'Horario' e/ou 'Dia semana' não existem na 'Página1'.")
-                                st.stop()
+                            else:
+                                # Atualiza as 3 células por intervalo A1 (estável)
+                                a1_start = rowcol_to_a1(row_number, c_data)
+                                a1_end   = rowcol_to_a1(row_number, c_dia)
+                                ws_p1.update(f"{a1_start}:{a1_end}", [[data_sel, hora, dia_sem]])
 
-                            # Atualiza com batch (mais estável que 3 update_cell)
-                            ws_p1.update(
-                                f"{chr(64+col_data)}{row_number}:{chr(64+col_dias)}{row_number}",
-                                [[data_sel, hora, dia_sem]]
-                            )
+                                # opcional: marcar indisponível na Página2
+                                try:
+                                    mask2 = (df_h["Data"] == data_sel) & (df_h["Horario"] == hora) & (df_h["Dia Semana"] == dia_sem)
+                                    if mask2.any():
+                                        idx2 = df_h.index[mask2][0]
+                                        ws_h.update_cell(idx2 + 2, df_h.columns.get_loc("Disponivel") + 1, "NÃO")
+                                except Exception as ex:
+                                    st.warning(f"Cadastro atualizado. Não consegui marcar o horário como indisponível na Página2: {ex}")
 
-                            st.success(
-                                f"Agendamento realizado!\n\n"
-                                f"Data: {data_sel} ({dia_sem})\n"
-                                f"Horário: {hora}"
-                            )
-
-                            # limpa estado para não “recolher” antes de mostrar o sucesso
-                            st.session_state.agendamento_busca_ok = False
-                            st.session_state.agendamento_row = None
-                            st.session_state.agendamento_registro = None
-                            st.session_state.agendamento_cols = []
-
-                            st.button("Voltar ao início", on_click=lambda: st.session_state.update({"tela": "inicio"}))
-
+                                st.success(f"Agendamento realizado!\n\nData: {data_sel} ({dia_sem})\nHorário: {hora}")
+                                st.button("Voltar ao início", on_click=lambda: st.session_state.update({
+                                    "tela": "inicio",
+                                    "agendamento_busca_ok": False,
+                                    "agendamento_row": None,
+                                    "agendamento_registro": None,
+                                    "agendamento_cols": []
+                                }))
 
 
 # =============== VISUALIZAÇÃO ADMIN (simples, opcional) ===============
@@ -401,6 +405,7 @@ if st.session_state["tela"] == "agendamento":
 #    worksheet = sh.worksheet("Página1")
 #    df = pd.DataFrame(worksheet.get_all_records())
 #    st.dataframe(df, use_container_width=True)
+
 
 
 
