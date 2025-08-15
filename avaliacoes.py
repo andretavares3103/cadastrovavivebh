@@ -174,6 +174,13 @@ if st.session_state["tela"] == "cadastro":
             cidade = st.text_input("Cidade")
             estado = st.text_input("Estado")
 
+            # === NOVO: Referências Profissionais (OBRIGATÓRIAS) ===
+            st.markdown("#### **Referências Profissionais**")
+            ref1_nome = st.text_input("*Nome Referência profissional 1")
+            ref1_contato = st.text_input("*Contato Referência profissional 1 (telefone/e-mail)")
+            ref2_nome = st.text_input("*Nome Referência profissional 2")
+            ref2_contato = st.text_input("*Contato Referência profissional 2 (telefone/e-mail)")
+
             st.markdown("#### **Documentos obrigatórios**")
             arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
             comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
@@ -200,7 +207,12 @@ if st.session_state["tela"] == "cadastro":
                 "Celular": celular,
                 "E-mail": email,
                 "Data de nascimento": data_nascimento,
-                "CEP": cep
+                "CEP": cep,
+                # NOVOS obrigatórios:
+                "Nome Ref 1": ref1_nome,
+                "Contato Ref 1": ref1_contato,
+                "Nome Ref 2": ref2_nome,
+                "Contato Ref 2": ref2_contato,
             }
             faltando = [campo for campo, valor in obrigatorios.items() if not valor]
             if faltando:
@@ -254,6 +266,9 @@ if st.session_state["tela"] == "cadastro":
                         st.warning("Não foi possível extrair data, dia e horário do horário selecionado!")
                         data_sel = hora_sel = dia_sem_sel = ""
 
+                    # IMPORTANTE: garanta que a linha de cabeçalho da Página1 tenha,
+                    # após 'Estado', as colunas:
+                    # Nome Ref 1 | Contato Ref 1 | Nome Ref 2 | Contato Ref 2
                     dados = [
                         nome,
                         cpf_format,
@@ -267,6 +282,10 @@ if st.session_state["tela"] == "cadastro":
                         bairro,
                         cidade,
                         estado,
+                        ref1_nome,         # NOVO
+                        ref1_contato,      # NOVO
+                        ref2_nome,         # NOVO
+                        ref2_contato,      # NOVO
                         "; ".join(links_rg_cpf),
                         "; ".join(links_comprovante),
                         data_sel,
@@ -285,6 +304,7 @@ if st.session_state["tela"] == "cadastro":
         if st.button("Agendar novo horário"):
             st.session_state["cadastro_finalizado"] = False
             st.session_state["tela"] = "agendamento"
+
 
 # =========== FLUXO APENAS AGENDAMENTO DE HORÁRIO ==============
 if st.session_state["tela"] == "agendamento":
@@ -407,3 +427,4 @@ if st.session_state["tela"] == "agendamento":
 #     worksheet = sh.worksheet("Página1")
 #     df = pd.DataFrame(worksheet.get_all_records())
 #     st.dataframe(df, use_container_width=True)
+
