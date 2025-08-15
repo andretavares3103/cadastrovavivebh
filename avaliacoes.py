@@ -177,9 +177,9 @@ if st.session_state["tela"] == "cadastro":
             # === NOVO: Referências Profissionais (OBRIGATÓRIAS) ===
             st.markdown("#### **Referências Profissionais**")
             ref1_nome = st.text_input("*Nome Referência profissional 1")
-            ref1_contato = st.text_input("*Contato Referência profissional 1 (telefone/e-mail)")
+            ref1_contato = st.text_input("*Contato Referência profissional 1 (telefone)")
             ref2_nome = st.text_input("*Nome Referência profissional 2")
-            ref2_contato = st.text_input("*Contato Referência profissional 2 (telefone/e-mail)")
+            ref2_contato = st.text_input("*Contato Referência profissional 2 (telefone)")
 
             st.markdown("#### **Documentos obrigatórios**")
             arquivos_rg_cpf = st.file_uploader("RG + CPF (frente e verso, PDF/JPG) *", accept_multiple_files=True)
@@ -427,4 +427,5 @@ if st.session_state["tela"] == "agendamento":
 #     worksheet = sh.worksheet("Página1")
 #     df = pd.DataFrame(worksheet.get_all_records())
 #     st.dataframe(df, use_container_width=True)
+
 
