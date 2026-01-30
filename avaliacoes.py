@@ -137,7 +137,7 @@ st.markdown("""
 <div style='display: flex; flex-direction: column; align-items: center; justify-content: center;'>
     <img src='https://i.imgur.com/gIhC0fC.png' height='60' style='margin-bottom: 12px;'>
     <span style='font-size:2.5em;font-weight:700;color:#18d96b;letter-spacing:1px; text-align: center;'>
-        BELO HORIZONTE || Recrutamento e Treinamento de Profissional
+        BELO HORIZONTE || ENTREVISTA de Profissional
     </span>
 </div>
 """, unsafe_allow_html=True)
@@ -186,7 +186,7 @@ if st.session_state["tela"] == "cadastro":
             comprovante_residencia = st.file_uploader("Comprovante de Residência (PDF/JPG) *", accept_multiple_files=True)
 
             # --- Horários (reuso da UI)
-            st.markdown("### Treinamento Presencial Obrigatório (Selecione um horário disponível)")
+            st.markdown("### ENTREVISTA Presencial Obrigatório (Selecione um horário disponível)")
             dispo, err = carregar_horarios_disponiveis(gc, SHEET_ID, aba="Página2")
             if err:
                 st.warning(err)
@@ -247,7 +247,7 @@ if st.session_state["tela"] == "cadastro":
                 elif not validar_cep(cep):
                     st.error("CEP inválido! Deve conter 8 dígitos.")
                 elif not horario_escolhido:
-                    st.error("Selecione um horário disponível para treinamento!")
+                    st.error("Selecione um horário disponível para a ENTREVISTA!")
                 else:
                     # uploads
                     links_rg_cpf = []
@@ -427,4 +427,5 @@ if st.session_state["tela"] == "agendamento":
 #     worksheet = sh.worksheet("Página1")
 #     df = pd.DataFrame(worksheet.get_all_records())
 #     st.dataframe(df, use_container_width=True)
+
 
